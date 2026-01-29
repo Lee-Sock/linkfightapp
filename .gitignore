@@ -1,0 +1,39 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+.Python
+
+# ---- Virtual environments ----
+.venv/
+venv/
+ENV/
+env/
+
+# ---- FastAPI / Uvicorn ----
+.env
+.env.*
+*.log
+
+# ---- Caches / tooling ----
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+
+# ---- IDE / editor ----
+.vscode/
+.idea/
+
+# ---- OS files ----
+Thumbs.db
+Desktop.ini
+
