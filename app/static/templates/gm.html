@@ -1,0 +1,80 @@
+<!doctype html><html><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Gamemaster - Simple Link Fight</title>
+<style>
+  body{font:14px system-ui;margin:0}
+  .wrap{max-width:900px;margin:16px auto;padding:12px}
+  h2{margin:6px 0 10px}
+  h4{margin:4px 0 8px}
+  .card{border:1px solid #ddd;border-radius:10px;padding:12px;margin:12px 0}
+  label{display:block;font-size:12px;color:#444;margin:6px 0 4px}
+  input,button{padding:8px;width:100%}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row>div{flex:1 1 170px}
+  pre{white-space:pre-wrap;background:#fafafa;border:1px solid #eee;padding:8px;border-radius:8px}
+  .kv{font-size:12px;color:#666}
+  .ok{color:#0a0}.warn{color:#c90}.bad{color:#c00}
+  small{font-size:11px;color:#666}
+  input:disabled{background:#f0f0f0;color:#666;cursor:not-allowed}
+  input.readonly{background:#f0f0f0;color:#666}
+</style>
+</head>
+<body><div class="wrap">
+<h2>Gamemaster</h2>
+
+<div class="card">
+  <h3>Create Session</h3>
+  <div class="row">
+    <div>
+      <h4>Node 1</h4>
+      <label>TX (MHz)</label><input id="A_tx" value="1300.750"/>
+      <label>RX (MHz)</label><input id="A_rx" value="1800.250"/>
+      <label>Local IP</label><input id="A_ip" value="10.1.1.9"/>
+      <label>Call ID</label><input id="A_cid" value="8" disabled/>
+      <label>Site elevation (m)</label><input id="A_elev" value="10"/>
+      <label>Azimuth (0-7200)</label><input id="A_az" type="number" min="0" max="7200" value=""/>
+    </div>
+    <div>
+      <h4>Node 2 (auto from Node 1)</h4>
+      <label>TX (MHz)</label><input id="B_tx" value="1300.750" disabled/>
+      <label>RX (MHz)</label><input id="B_rx" value="1800.250" disabled/>
+      <label>Local IP</label><input id="B_ip" value="10.1.1.8" disabled/>
+      <label>Call ID</label><input id="B_cid" value="7" disabled/>
+      <label>Site elevation (m)</label><input id="B_elev" value="30"/>
+      <label>Azimuth (0-7200)</label><input id="B_az" type="number" min="0" max="7200" value="" disabled/>
+    </div>
+  </div>
+  <small>Node 2 TX, RX, Local IP, and Azimuth auto-fill from Node 1. Call IDs are auto-generated from IP pairing.</small>
+  <div class="row" style="margin-top:10px">
+    <div style="flex:0 0 200px">
+      <label>Distance (km)</label><input id="distance" type="number" min="0.1" max="100" step="0.1" value="5.0"/>
+    </div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <div><button id="create">Create Session</button></div>
+  </div>
+  <div class="kv" id="sidRow">Session: -</div>
+  <div class="kv" id="links">Player links will appear here after creation</div>
+</div>
+
+<div class="card">
+  <h3>Live View</h3>
+  <div id="live">-</div>
+</div>
+
+<div class="card">
+  <h3>Antenna Visualization (Both Nodes)</h3>
+  <div id="antenna3d-container" style="width:100%;height:500px;background:#1a1a1a;border-radius:10px"></div>
+  <div class="kv" style="margin-top:8px">
+    <span style="color:#4488ff">Node A</span> |
+    <span style="color:#ff8844">Node B</span>
+  </div>
+</div>
+
+<!-- Three.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<!-- Our custom scripts (cache-bust with version) -->
+<script src="/static/js/antenna3d.js?v=4"></script>
+<script src="/static/js/gm.js?v=4"></script>
+
+</div></body></html>
