@@ -1,80 +1,190 @@
-<!doctype html><html><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Gamemaster - Simple Link Fight</title>
-<style>
-  body{font:14px system-ui;margin:0}
-  .wrap{max-width:900px;margin:16px auto;padding:12px}
-  h2{margin:6px 0 10px}
-  h4{margin:4px 0 8px}
-  .card{border:1px solid #ddd;border-radius:10px;padding:12px;margin:12px 0}
-  label{display:block;font-size:12px;color:#444;margin:6px 0 4px}
-  input,button{padding:8px;width:100%}
-  .row{display:flex;gap:12px;flex-wrap:wrap}
-  .row>div{flex:1 1 170px}
-  pre{white-space:pre-wrap;background:#fafafa;border:1px solid #eee;padding:8px;border-radius:8px}
-  .kv{font-size:12px;color:#666}
-  .ok{color:#0a0}.warn{color:#c90}.bad{color:#c00}
-  small{font-size:11px;color:#666}
-  input:disabled{background:#f0f0f0;color:#666;cursor:not-allowed}
-  input.readonly{background:#f0f0f0;color:#666}
-</style>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>Gamemaster - Link Fight</title>
+    <link rel="stylesheet" href="/static/css/styles.css"/>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body><div class="wrap">
-<h2>Gamemaster</h2>
+<body>
+    <div class="container container-wide">
+        <!-- Header -->
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6);">
+            <a href="/" class="nav-link" style="padding: var(--space-2);">
+                <i data-lucide="arrow-left" style="width: 20px; height: 20px;"></i>
+            </a>
+            <h1 style="margin: 0;">Gamemaster</h1>
+        </div>
 
-<div class="card">
-  <h3>Create Session</h3>
-  <div class="row">
-    <div>
-      <h4>Node 1</h4>
-      <label>TX (MHz)</label><input id="A_tx" value="1300.750"/>
-      <label>RX (MHz)</label><input id="A_rx" value="1800.250"/>
-      <label>Local IP</label><input id="A_ip" value="10.1.1.9"/>
-      <label>Call ID</label><input id="A_cid" value="8" disabled/>
-      <label>Site elevation (m)</label><input id="A_elev" value="10"/>
-      <label>Azimuth (0-7200)</label><input id="A_az" type="number" min="0" max="7200" value=""/>
+        <!-- Create Session Card -->
+        <div class="card">
+            <div class="card-header">
+                <i data-lucide="plus-circle" style="width: 24px; height: 24px; color: var(--color-primary-600);"></i>
+                <div>
+                    <h2 class="card-title">Create Session</h2>
+                    <div class="card-subtitle">Configure nodes and start a new training session</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <!-- Node 1 -->
+                <div>
+                    <h3 style="font-size: 1rem; margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-2);">
+                        <span class="badge badge-success">A</span>
+                        Node 1
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">TX Frequency (MHz)</label>
+                        <input type="text" id="A_tx" class="form-input" value="1300.750"/>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">RX Frequency (MHz)</label>
+                        <input type="text" id="A_rx" class="form-input" value="1800.250"/>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Local IP</label>
+                        <input type="text" id="A_ip" class="form-input" value="10.1.1.9"/>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Call ID</label>
+                        <input type="text" id="A_cid" class="form-input" value="8" disabled/>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Site Elevation (m)</label>
+                        <input type="number" id="A_elev" class="form-input" value="10"/>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Azimuth (0-7200 ticks)</label>
+                        <input type="number" id="A_az" class="form-input" min="0" max="7200" placeholder="Enter azimuth"/>
+                    </div>
+                </div>
+
+                <!-- Node 2 -->
+                <div>
+                    <h3 style="font-size: 1rem; margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-2);">
+                        <span class="badge badge-warning">B</span>
+                        Node 2
+                        <span class="badge" style="background: var(--color-gray-100); color: var(--text-muted); font-size: 0.625rem;">AUTO</span>
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">TX Frequency (MHz)</label>
+                        <input type="text" id="B_tx" class="form-input" value="1300.750" disabled/>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">RX Frequency (MHz)</label>
+                        <input type="text" id="B_rx" class="form-input" value="1800.250" disabled/>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Local IP</label>
+                        <input type="text" id="B_ip" class="form-input" value="10.1.1.8" disabled/>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Call ID</label>
+                        <input type="text" id="B_cid" class="form-input" value="7" disabled/>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Site Elevation (m)</label>
+                        <input type="number" id="B_elev" class="form-input" value="30"/>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Azimuth (0-7200 ticks)</label>
+                        <input type="number" id="B_az" class="form-input" min="0" max="7200" disabled/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row" style="margin-top: var(--space-4); max-width: 300px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Distance (km)</label>
+                    <input type="number" id="distance" class="form-input" min="0.1" max="100" step="0.1" value="5.0"/>
+                </div>
+            </div>
+
+            <p class="form-hint" style="margin-top: var(--space-4);">
+                <i data-lucide="info" style="width: 12px; height: 12px; display: inline; vertical-align: middle;"></i>
+                Node 2 TX, RX, Local IP, and Azimuth auto-fill from Node 1. Call IDs are auto-generated from IP pairing.
+            </p>
+
+            <button id="create" class="btn btn-primary btn-lg" style="margin-top: var(--space-4);">
+                <i data-lucide="play-circle" style="width: 20px; height: 20px;"></i>
+                Create Session
+            </button>
+
+            <div id="sessionInfo" class="session-info hidden">
+                <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3);">
+                    <i data-lucide="check-circle" style="width: 20px; height: 20px; color: var(--color-success);"></i>
+                    <span style="font-weight: 600;">Session Created Successfully</span>
+                </div>
+                <div id="sidRow" class="text-mono" style="font-size: 1.125rem; font-weight: 600; color: var(--color-primary-800); margin-bottom: var(--space-3);"></div>
+                <div id="links" class="session-links"></div>
+            </div>
+        </div>
+
+        <!-- Live View Card -->
+        <div class="card">
+            <div class="card-header">
+                <i data-lucide="activity" style="width: 24px; height: 24px; color: var(--color-primary-600);"></i>
+                <div>
+                    <h2 class="card-title">Live Telemetry</h2>
+                    <div class="card-subtitle">Real-time signal and alignment data</div>
+                </div>
+            </div>
+            
+            <div id="live" class="empty-state">
+                <i data-lucide="radio" class="empty-state-icon"></i>
+                <p>Create a session to view live telemetry</p>
+            </div>
+        </div>
+
+        <!-- 3D Visualization Card -->
+        <div class="card">
+            <div class="card-header">
+                <i data-lucide="box" style="width: 24px; height: 24px; color: var(--color-primary-600);"></i>
+                <div>
+                    <h2 class="card-title">Antenna Visualization</h2>
+                    <div class="card-subtitle">3D view of both nodes</div>
+                </div>
+            </div>
+            
+            <div id="antenna3d-container" class="viz-container" style="height: 500px;"></div>
+            
+            <div class="viz-legend">
+                <div class="viz-legend-item">
+                    <div class="viz-legend-dot" style="background: #4488ff;"></div>
+                    <span>Node A</span>
+                </div>
+                <div class="viz-legend-item">
+                    <div class="viz-legend-dot" style="background: #ff8844;"></div>
+                    <span>Node B</span>
+                </div>
+            </div>
+        </div>
     </div>
-    <div>
-      <h4>Node 2 (auto from Node 1)</h4>
-      <label>TX (MHz)</label><input id="B_tx" value="1300.750" disabled/>
-      <label>RX (MHz)</label><input id="B_rx" value="1800.250" disabled/>
-      <label>Local IP</label><input id="B_ip" value="10.1.1.8" disabled/>
-      <label>Call ID</label><input id="B_cid" value="7" disabled/>
-      <label>Site elevation (m)</label><input id="B_elev" value="30"/>
-      <label>Azimuth (0-7200)</label><input id="B_az" type="number" min="0" max="7200" value="" disabled/>
-    </div>
-  </div>
-  <small>Node 2 TX, RX, Local IP, and Azimuth auto-fill from Node 1. Call IDs are auto-generated from IP pairing.</small>
-  <div class="row" style="margin-top:10px">
-    <div style="flex:0 0 200px">
-      <label>Distance (km)</label><input id="distance" type="number" min="0.1" max="100" step="0.1" value="5.0"/>
-    </div>
-  </div>
-  <div class="row" style="margin-top:10px">
-    <div><button id="create">Create Session</button></div>
-  </div>
-  <div class="kv" id="sidRow">Session: -</div>
-  <div class="kv" id="links">Player links will appear here after creation</div>
-</div>
 
-<div class="card">
-  <h3>Live View</h3>
-  <div id="live">-</div>
-</div>
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
 
-<div class="card">
-  <h3>Antenna Visualization (Both Nodes)</h3>
-  <div id="antenna3d-container" style="width:100%;height:500px;background:#1a1a1a;border-radius:10px"></div>
-  <div class="kv" style="margin-top:8px">
-    <span style="color:#4488ff">Node A</span> |
-    <span style="color:#ff8844">Node B</span>
-  </div>
-</div>
-
-<!-- Three.js CDN -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<!-- Our custom scripts (cache-bust with version) -->
-<script src="/static/js/antenna3d.js?v=4"></script>
-<script src="/static/js/gm.js?v=4"></script>
-
-</div></body></html>
+    <!-- Three.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <!-- Our custom scripts -->
+    <script src="/static/js/antenna3d.js?v=5"></script>
+    <script src="/static/js/gm.js?v=5"></script>
+    
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

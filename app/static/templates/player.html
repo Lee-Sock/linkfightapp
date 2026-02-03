@@ -1,115 +1,233 @@
-<!doctype html><html><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Player - Simple Link Fight</title>
-<style>
-  body{font:14px system-ui;margin:0;background:#f5f5f5}
-  .wrap{max-width:900px;margin:16px auto;padding:12px}
-  h2{margin:6px 0 10px}
-  .card{border:1px solid #ddd;border-radius:10px;padding:12px;margin:12px 0;background:#fff}
-  label{display:block;font-size:12px;color:#444;margin:8px 0 4px}
-  input,button,select{padding:8px;width:100%}
-  .row{display:flex;gap:8px;flex-wrap:wrap}
-  .row>div{flex:1 1 180px}
-  .meter{height:20px;background:#eee;border-radius:10px;overflow:hidden;margin:8px 0}
-  .fill{height:100%;width:0%;background:linear-gradient(90deg,#c00,#cc0,#0a0);transition:width 0.3s}
-  .kv{font-size:12px;color:#666}
-  .value-display{font-family:monospace;font-weight:bold;color:#333;font-size:14px;padding:4px 8px;background:#f0f0f0;border-radius:5px;text-align:center;min-width:40px}
-  .status-joined{color:#0a0;font-weight:500}
-  .help-text{font-size:11px;color:#888;margin-top:8px}
-
-  /* New layout styles */
-  .antenna-control-panel{display:flex;flex-direction:column;gap:12px}
-  .azimuth-bar{display:flex;align-items:center;gap:12px;padding:12px;background:#2a2a2a;border-radius:8px}
-  .azimuth-bar label{color:#aaa;margin:0;white-space:nowrap;font-weight:bold}
-  .azimuth-slider{flex:1;height:8px;-webkit-appearance:none;background:#444;border-radius:4px;cursor:pointer}
-  .azimuth-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#4488ff;border-radius:50%;cursor:pointer}
-  .azimuth-slider::-moz-range-thumb{width:20px;height:20px;background:#4488ff;border-radius:50%;cursor:pointer;border:none}
-  .azimuth-input{width:80px;text-align:center;font-family:monospace;font-size:14px;padding:6px 8px;border:1px solid #555;border-radius:4px;background:#333;color:#fff}
-  .azimuth-bar .unit{color:#888;font-size:12px}
-
-  .viz-container{display:flex;gap:12px;min-height:450px}
-  .sidebar{display:flex;flex-direction:column;align-items:center;justify-content:space-between;width:70px;background:#2a2a2a;border-radius:8px;padding:16px 8px}
-  .sidebar label{color:#aaa;font-size:11px;font-weight:bold;margin:0}
-  .sidebar .value-display{background:#333;color:#fff;font-size:12px;min-width:30px}
-  .sidebar .range-labels{display:flex;flex-direction:column;align-items:center;height:100%;justify-content:space-between;font-size:10px;color:#666}
-
-  .vertical-slider{writing-mode:vertical-lr;direction:rtl;height:200px;-webkit-appearance:none;background:#444;border-radius:4px;cursor:pointer;width:8px}
-  .vertical-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#4488ff;border-radius:50%;cursor:pointer}
-  .vertical-slider::-moz-range-thumb{width:20px;height:20px;background:#4488ff;border-radius:50%;cursor:pointer;border:none}
-  .mast-slider::-webkit-slider-thumb{background:#88cc44}
-  .mast-slider::-moz-range-thumb{background:#88cc44}
-  .tilt-slider::-webkit-slider-thumb{background:#ff8844}
-  .tilt-slider::-moz-range-thumb{background:#ff8844}
-
-  .viz-3d{flex:1;background:#1a1a1a;border-radius:10px;min-height:400px}
-</style>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>Player - Link Fight</title>
+    <link rel="stylesheet" href="/static/css/styles.css"/>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body><div class="wrap">
-<h2>Player</h2>
+<body>
+    <div class="container container-wide">
+        <!-- Header -->
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6);">
+            <a href="/" class="nav-link" style="padding: var(--space-2);">
+                <i data-lucide="arrow-left" style="width: 20px; height: 20px;"></i>
+            </a>
+            <h1 style="margin: 0;">Player</h1>
+        </div>
 
-<div class="card">
-  <div class="row">
-    <div><label>Session</label><input id="sid" placeholder="paste session id"/></div>
-    <div><label>Node</label>
-      <select id="team">
-        <option value="A">Node 1</option>
-        <option value="B">Node 2</option>
-      </select>
+        <!-- Session Join Card -->
+        <div class="card">
+            <div class="card-header">
+                <i data-lucide="log-in" style="width: 24px; height: 24px; color: var(--color-primary-600);"></i>
+                <div>
+                    <h2 class="card-title">Join Session</h2>
+                    <div class="card-subtitle">Enter session details to connect</div>
+                </div>
+            </div>
+
+            <div class="form-row" style="grid-template-columns: 2fr 1fr auto;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Session ID</label>
+                    <input type="text" id="sid" class="form-input" placeholder="Paste session ID"/>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Node</label>
+                    <select id="team" class="form-select">
+                        <option value="A">Node 1</option>
+                        <option value="B">Node 2</option>
+                    </select>
+                </div>
+                
+                <div style="align-self: end;">
+                    <button id="join" class="btn btn-primary" style="min-width: 100px;">
+                        <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+                        Join
+                    </button>
+                </div>
+            </div>
+
+            <div id="brief" class="text-muted mt-4">-</div>
+            <div id="joinStatus" style="margin-top: var(--space-3);"></div>
+        </div>
+
+        <!-- Antenna Controls Card -->
+        <div class="card">
+            <div class="card-header">
+                <i data-lucide="sliders" style="width: 24px; height: 24px; color: var(--color-primary-600);"></i>
+                <div>
+                    <h2 class="card-title">Antenna Controls</h2>
+                    <div class="card-subtitle">Adjust azimuth, mast height, and tilt</div>
+                </div>
+            </div>
+
+            <!-- Mobile Layout (stacked) -->
+            <div class="controls-mobile" id="mobileControls">
+                <!-- Azimuth -->
+                <div class="control-slider-mobile">
+                    <div class="slider-label">
+                        <span>Azimuth</span>
+                    </div>
+                    <div class="azimuth-mobile-stack">
+                        <div class="azimuth-row azimuth-minus">
+                            <button type="button" class="btn-azimuth-adjust" data-delta="-1000" data-target="mobile">-1000</button>
+                            <button type="button" class="btn-azimuth-adjust" data-delta="-100" data-target="mobile">-100</button>
+                            <button type="button" class="btn-azimuth-adjust" data-delta="-1" data-target="mobile">-1</button>
+                        </div>
+                        <div class="azimuth-row azimuth-value-row">
+                            <input type="number" id="az_input_mobile" class="azimuth-number-input" min="0" max="7200" value="0">
+                            <span class="azimuth-unit">ticks</span>
+                        </div>
+                        <div class="azimuth-row azimuth-plus">
+                            <button type="button" class="btn-azimuth-adjust" data-delta="1" data-target="mobile">+1</button>
+                            <button type="button" class="btn-azimuth-adjust" data-delta="100" data-target="mobile">+100</button>
+                            <button type="button" class="btn-azimuth-adjust" data-delta="1000" data-target="mobile">+1000</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D Visualization -->
+                <div id="antenna3d-container" class="viz-container" style="height: 350px;"></div>
+
+                <!-- Mast -->
+                <div class="control-slider-mobile">
+                    <div class="slider-label">
+                        <span>Mast Sections</span>
+                        <span class="slider-value" id="mast_display_mobile">1</span>
+                    </div>
+                    <input type="range" id="mast_slider_mobile" class="slider-mast" min="1" max="9" value="1">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.625rem; color: var(--color-gray-500); margin-top: var(--space-1);">
+                        <span>1</span>
+                        <span>5</span>
+                        <span>9</span>
+                    </div>
+                </div>
+
+                <!-- Tilt -->
+                <div class="control-slider-mobile">
+                    <div class="slider-label">
+                        <span>Tilt</span>
+                        <span class="slider-value" id="tilt_display_mobile">0°</span>
+                    </div>
+                    <input type="range" id="tilt_slider_mobile" class="slider-tilt" min="-15" max="15" value="0">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.625rem; color: var(--color-gray-500); margin-top: var(--space-1);">
+                        <span>-15°</span>
+                        <span>0°</span>
+                        <span>+15°</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desktop Layout (sidebars) -->
+            <div class="control-panel hidden" id="desktopControls">
+                <!-- Azimuth (full width) -->
+                <div class="azimuth-control">
+                    <div class="azimuth-header">
+                        <span class="azimuth-label">Azimuth</span>
+                        <span class="azimuth-value" id="az_display_desktop">0 ticks</span>
+                    </div>
+                    <div class="azimuth-input-group">
+                        <button type="button" class="btn-azimuth-adjust" data-delta="-1000" data-target="desktop">-1000</button>
+                        <button type="button" class="btn-azimuth-adjust" data-delta="-100" data-target="desktop">-100</button>
+                        <button type="button" class="btn-azimuth-adjust" data-delta="-1" data-target="desktop">-1</button>
+                        <input type="number" id="az_input_desktop" class="azimuth-number-input" min="0" max="7200" value="0">
+                        <button type="button" class="btn-azimuth-adjust" data-delta="1" data-target="desktop">+1</button>
+                        <button type="button" class="btn-azimuth-adjust" data-delta="100" data-target="desktop">+100</button>
+                        <button type="button" class="btn-azimuth-adjust" data-delta="1000" data-target="desktop">+1000</button>
+                    </div>
+                </div>
+
+                <!-- Mast Sidebar -->
+                <div class="mast-sidebar">
+                    <span class="sidebar-label">Mast</span>
+                    <span style="color: var(--color-gray-400); font-size: 0.625rem;">9</span>
+                    <input type="range" id="mast_slider_desktop" class="slider-vertical slider-mast" min="1" max="9" value="1">
+                    <span style="color: var(--color-gray-400); font-size: 0.625rem;">1</span>
+                    <div class="sidebar-value" id="mast_display_desktop">1</div>
+                </div>
+
+                <!-- 3D Visualization -->
+                <div id="antenna3d-container-desktop" class="viz-container viz-3d-container"></div>
+
+                <!-- Tilt Sidebar -->
+                <div class="tilt-sidebar">
+                    <span class="sidebar-label">Tilt</span>
+                    <span style="color: var(--color-gray-400); font-size: 0.625rem;">+15°</span>
+                    <input type="range" id="tilt_slider_desktop" class="slider-vertical slider-tilt" min="-15" max="15" value="0">
+                    <span style="color: var(--color-gray-400); font-size: 0.625rem;">-15°</span>
+                    <div class="sidebar-value" id="tilt_display_desktop">0°</div>
+                </div>
+            </div>
+
+            <!-- Keyboard Shortcuts Help -->
+            <div class="shortcuts-help">
+                <div class="shortcuts-title">
+                    <i data-lucide="keyboard" style="width: 12px; height: 12px; display: inline; vertical-align: middle;"></i>
+                    Keyboard Shortcuts
+                </div>
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">←</span>
+                        <span>Azimuth -</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">→</span>
+                        <span>Azimuth +</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">↑</span>
+                        <span>Tilt +</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">↓</span>
+                        <span>Tilt -</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">PgUp</span>
+                        <span>Mast +</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">PgDn</span>
+                        <span>Mast -</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RX Signal Card -->
+        <div class="card">
+            <div class="card-header">
+                <i data-lucide="signal" style="width: 24px; height: 24px; color: var(--color-primary-600);"></i>
+                <div>
+                    <h2 class="card-title">RX Signal Strength</h2>
+                    <div class="card-subtitle">Real-time signal quality indicator</div>
+                </div>
+            </div>
+
+            <div class="signal-meter">
+                <div id="fill" class="signal-fill" style="width: 0%;"></div>
+            </div>
+            
+            <div class="signal-value">
+                <span id="rx">- dBm</span>
+                <span id="rxQuality" class="badge">No Signal</span>
+            </div>
+        </div>
     </div>
-    <div style="align-self:end"><button id="join">Join</button></div>
-  </div>
-  <div class="kv" id="brief">-</div>
-  <div class="kv" id="joinStatus" style="margin-top:8px;font-weight:500"></div>
-</div>
 
-<div class="card">
-  <h3>Antenna Controls</h3>
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
 
-  <div class="antenna-control-panel">
-    <!-- Azimuth bar at top -->
-    <div class="azimuth-bar">
-      <label>AZIMUTH</label>
-      <input type="range" id="az_slider" class="azimuth-slider" min="0" max="7200" value="0">
-      <input type="number" id="az_input" class="azimuth-input" min="0" max="7200" value="0">
-      <span class="unit">ticks</span>
-    </div>
-
-    <!-- Main area: mast | 3D | tilt -->
-    <div class="viz-container">
-      <!-- Left sidebar: Mast slider -->
-      <div class="sidebar">
-        <label>MAST</label>
-        <span style="color:#aaa;font-size:11px">9</span>
-        <input type="range" id="mast_slider" class="vertical-slider mast-slider" min="1" max="9" value="1">
-        <span style="color:#aaa;font-size:11px">1</span>
-        <div class="value-display" id="mast_display">1</div>
-      </div>
-
-      <!-- Center: 3D visualization -->
-      <div id="antenna3d-container" class="viz-3d"></div>
-
-      <!-- Right sidebar: Tilt slider -->
-      <div class="sidebar">
-        <label>TILT</label>
-        <span style="color:#aaa;font-size:11px">+15</span>
-        <input type="range" id="tilt_slider" class="vertical-slider tilt-slider" min="-15" max="15" value="0">
-        <span style="color:#aaa;font-size:11px">-15</span>
-        <div class="value-display" id="tilt_display">0°</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="card">
-  <h3>RX Signal</h3>
-  <div class="meter"><div id="fill" class="fill"></div></div>
-  <div id="rx" class="kv">-</div>
-</div>
-
-<!-- Three.js CDN -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<!-- Our custom scripts (cache-bust with version) -->
-<script src="/static/js/antenna3d.js?v=4"></script>
-<script src="/static/js/player.js?v=4"></script>
-
-</div></body></html>
+    <!-- Three.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <!-- Our custom scripts -->
+    <script src="/static/js/antenna3d.js?v=5"></script>
+    <script src="/static/js/player.js?v=5"></script>
+    
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

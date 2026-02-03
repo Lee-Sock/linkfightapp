@@ -16,35 +16,74 @@ let lastAppliedAz = 0;
 let lastAppliedTilt = 0;
 let lastAppliedMast = 1;
 
+// Detect mobile layout
+const isMobile = () => window.innerWidth < 768;
+
 function pct(rx) {
   const lo = -120, hi = -70;
   return Math.max(0, Math.min(100, (rx - lo) / (hi - lo) * 100));
 }
 
-function color(rx) {
-  if (rx < -93) return 'green';      // Best link
-  if (rx >= -95 && rx < -93) return 'orange';
-  if (rx >= -103 && rx < -95) return 'orange';
-  if (rx >= -110 && rx < -103) return 'red';
-  return 'red';  // Anything worse than -110
+function getQualityBadge(rx) {
+  if (rx >= -80) return { text: 'Excellent', class: 'badge-success' };
+  if (rx >= -90) return { text: 'Good', class: 'badge-success' };
+  if (rx >= -95) return { text: 'Fair', class: 'badge-warning' };
+  if (rx >= -103) return { text: 'Poor', class: 'badge-warning' };
+  return { text: 'Critical', class: 'badge-error' };
 }
 
 function fmtBrief(b) {
   return `Node: ${b.node} | Local IP: ${b.local_ip} | TX: ${b.tx_MHz} MHz | RX: ${b.rx_MHz} MHz | `
-    + `Distant end: ${b.distant_end} | Site elev: ${b.site_elevation_m} m | Azimuth sector: ${b.azimuth_sector_deg}`;
+    + `Distant end: ${b.distant_end} | Site elev: ${b.site_elevation_m} m | Azimuth sector: ${b.azimuth_sector_deg}°`;
 }
 
-// Debounce timer for auto-apply
-let applyTimeout = null;
+// Toast notification helper
+function showToast(message, type = 'success') {
+  const container = E('toastContainer');
+  if (!container) return;
+  
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  
+  const icon = type === 'success' ? 'check-circle' : 
+               type === 'error' ? 'x-circle' : 
+               type === 'warning' ? 'alert-triangle' : 'info';
+  
+  toast.innerHTML = `
+    <i data-lucide="${icon}" style="width: 20px; height: 20px;"></i>
+    <span>${message}</span>
+  `;
+  
+  container.appendChild(toast);
+  lucide.createIcons();
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideIn 0.3s ease reverse';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
 
-// Update display values and sync sliders
+// Update display values and sync controls
 function updateDisplays() {
-  E('az_slider').value = currentAz;
-  E('az_input').value = currentAz;
-  E('mast_slider').value = currentMast;
-  E('mast_display').textContent = currentMast;
-  E('tilt_slider').value = currentTilt;
-  E('tilt_display').textContent = currentTilt + '°';
+  const mobile = isMobile();
+  
+  if (mobile) {
+    // Mobile controls
+    E('az_input_mobile').value = currentAz;
+    E('az_display_mobile').textContent = currentAz + ' ticks';
+    E('mast_slider_mobile').value = currentMast;
+    E('mast_display_mobile').textContent = currentMast;
+    E('tilt_slider_mobile').value = currentTilt;
+    E('tilt_display_mobile').textContent = currentTilt + '°';
+  } else {
+    // Desktop controls
+    E('az_input_desktop').value = currentAz;
+    E('az_display_desktop').textContent = currentAz + ' ticks';
+    E('mast_slider_desktop').value = currentMast;
+    E('mast_display_desktop').textContent = currentMast;
+    E('tilt_slider_desktop').value = currentTilt;
+    E('tilt_display_desktop').textContent = currentTilt + '°';
+  }
 }
 
 // Update 3D visualization locally
@@ -54,7 +93,9 @@ function updateVisualization() {
   }
 }
 
-// Debounced apply function for smooth sliding
+// Debounce timer for auto-apply
+let applyTimeout = null;
+
 function debounceApply() {
   if (applyTimeout) clearTimeout(applyTimeout);
   applyTimeout = setTimeout(() => {
@@ -87,52 +128,114 @@ function adjustMast(delta) {
   debounceApply();
 }
 
-// Slider control handlers
+// Setup azimuth button handlers
+function setupAzimuthButtons() {
+  // Mobile azimuth buttons
+  document.querySelectorAll('#mobileControls .btn-azimuth-adjust').forEach(btn => {
+    btn.onclick = () => {
+      const delta = parseInt(btn.dataset.delta);
+      adjustAz(delta);
+    };
+  });
+  
+  // Desktop azimuth buttons
+  document.querySelectorAll('#desktopControls .btn-azimuth-adjust').forEach(btn => {
+    btn.onclick = () => {
+      const delta = parseInt(btn.dataset.delta);
+      adjustAz(delta);
+    };
+  });
+  
+  // Mobile azimuth input
+  E('az_input_mobile').onchange = () => {
+    currentAz = Math.max(0, Math.min(7200, parseInt(E('az_input_mobile').value) || 0));
+    hasUnappliedChanges = true;
+    updateDisplays();
+    updateVisualization();
+    debounceApply();
+  };
+  
+  // Desktop azimuth input
+  E('az_input_desktop').onchange = () => {
+    currentAz = Math.max(0, Math.min(7200, parseInt(E('az_input_desktop').value) || 0));
+    hasUnappliedChanges = true;
+    updateDisplays();
+    updateVisualization();
+    debounceApply();
+  };
+}
+
+// Setup controls based on current layout
 function setupControls() {
-  // Azimuth slider - auto-apply with debounce
-  E('az_slider').oninput = () => {
-    currentAz = parseInt(E('az_slider').value);
-    E('az_input').value = currentAz;
-    hasUnappliedChanges = true;
-    updateVisualization();
-    debounceApply();
-  };
+  const mobile = isMobile();
+  
+  // Setup azimuth buttons (both mobile and desktop)
+  setupAzimuthButtons();
+  
+  if (mobile) {
+    // Mobile mast slider
+    E('mast_slider_mobile').oninput = () => {
+      currentMast = parseInt(E('mast_slider_mobile').value);
+      hasUnappliedChanges = true;
+      updateVisualization();
+    };
+    E('mast_slider_mobile').onchange = () => apply();
 
-  // Azimuth numeric input
-  E('az_input').onchange = () => {
-    currentAz = Math.max(0, Math.min(7200, parseInt(E('az_input').value) || 0));
-    E('az_slider').value = currentAz;
-    hasUnappliedChanges = true;
-    updateVisualization();
-    debounceApply();
-  };
+    // Mobile tilt slider
+    E('tilt_slider_mobile').oninput = () => {
+      currentTilt = parseInt(E('tilt_slider_mobile').value);
+      E('tilt_display_mobile').textContent = currentTilt + '°';
+      hasUnappliedChanges = true;
+      updateVisualization();
+    };
+    E('tilt_slider_mobile').onchange = () => apply();
+  } else {
+    // Desktop mast slider
+    E('mast_slider_desktop').oninput = () => {
+      currentMast = parseInt(E('mast_slider_desktop').value);
+      hasUnappliedChanges = true;
+      updateVisualization();
+    };
+    E('mast_slider_desktop').onchange = () => apply();
 
-  // Mast slider
-  E('mast_slider').oninput = () => {
-    currentMast = parseInt(E('mast_slider').value);
-    E('mast_display').textContent = currentMast;
-    hasUnappliedChanges = true;
-    updateVisualization();
-  };
-  E('mast_slider').onchange = () => {
-    apply();  // Apply on release
-  };
+    // Desktop tilt slider
+    E('tilt_slider_desktop').oninput = () => {
+      currentTilt = parseInt(E('tilt_slider_desktop').value);
+      E('tilt_display_desktop').textContent = currentTilt + '°';
+      hasUnappliedChanges = true;
+      updateVisualization();
+    };
+    E('tilt_slider_desktop').onchange = () => apply();
+  }
+}
 
-  // Tilt slider
-  E('tilt_slider').oninput = () => {
-    currentTilt = parseInt(E('tilt_slider').value);
-    E('tilt_display').textContent = currentTilt + '°';
-    hasUnappliedChanges = true;
-    updateVisualization();
-  };
-  E('tilt_slider').onchange = () => {
-    apply();  // Apply on release
-  };
+// Handle window resize to switch layouts
+function handleResize() {
+  const mobile = isMobile();
+  const mobileControls = E('mobileControls');
+  const desktopControls = E('desktopControls');
+  
+  if (mobile) {
+    mobileControls.classList.remove('hidden');
+    desktopControls.classList.add('hidden');
+    // Re-init viz container if needed
+    if (viz3d) {
+      viz3d.container = E('antenna3d-container');
+    }
+  } else {
+    mobileControls.classList.add('hidden');
+    desktopControls.classList.remove('hidden');
+    // Re-init viz container if needed
+    if (viz3d) {
+      viz3d.container = E('antenna3d-container-desktop');
+    }
+  }
+  
+  updateDisplays();
 }
 
 // Keyboard controls
 document.addEventListener('keydown', (e) => {
-  // Only handle if not typing in an input field
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 
   switch(e.key) {
@@ -188,13 +291,14 @@ function readQueryDefaults() {
   }
 }
 
-// Initialize everything when script loads
 console.log('Player.js: Script loaded, initializing...');
 
-// Read URL params FIRST
 readQueryDefaults();
 
-// Then setup controls
+// Setup initial layout
+handleResize();
+window.addEventListener('resize', handleResize);
+
 try {
   setupControls();
   console.log('Player.js: Controls initialized');
@@ -210,27 +314,24 @@ async function join() {
 
   const r = await fetch(`/simple/${sid}/player_view?team=${team}`);
   if (!r.ok) {
-    E('joinStatus').textContent = 'Failed to join';
-    E('joinStatus').className = 'kv';
+    E('joinStatus').innerHTML = '<span class="badge badge-error">Failed to join session</span>';
     return;
   }
 
   const j = await r.json();
   if (j.brief) E('brief').textContent = fmtBrief(j.brief);
-  // Don't load server values - start fresh at az=0, tilt=0, mast=1
-  // Player will aim their antenna from scratch
+  
   currentAz = 0;
   currentTilt = 0;
   currentMast = 1;
   updateDisplays();
 
-  // Apply initial values to server
   await apply();
 
-  // Show joined status
   console.log('Join successful, showing status');
-  E('joinStatus').textContent = '✓ Joined as ' + (team === 'A' ? 'Node 1' : 'Node 2');
-  E('joinStatus').className = 'kv status-joined';
+  E('joinStatus').innerHTML = `<span class="badge badge-success"><i data-lucide="check-circle" style="width: 12px; height: 12px;"></i> Joined as ${team === 'A' ? 'Node 1' : 'Node 2'}</span>`;
+  lucide.createIcons();
+  showToast(`Joined as ${team === 'A' ? 'Node 1' : 'Node 2'}!`);
 
   // Initialize 3D visualization
   if (!viz3d) {
@@ -244,11 +345,11 @@ async function join() {
         console.error('Antenna3DVisualization class not loaded!');
         return;
       }
-      // Initialize in player mode with current team
-      viz3d = new Antenna3DVisualization('antenna3d-container', 'player', team);
+      
+      const containerId = isMobile() ? 'antenna3d-container' : 'antenna3d-container-desktop';
+      viz3d = new Antenna3DVisualization(containerId, 'player', team);
       console.log('3D visualization initialized successfully');
 
-      // Initial update with both antenna states
       if (j.my_current && j.other_current) {
         viz3d.updateFromPlayerData({
           myNode: team,
@@ -283,7 +384,6 @@ async function apply() {
     });
 
     if (response.ok) {
-      // Mark as applied
       hasUnappliedChanges = false;
       lastAppliedAz = currentAz;
       lastAppliedTilt = currentTilt;
@@ -307,25 +407,24 @@ async function poll() {
 
       const j = await r.json();
 
-      // Update brief
       if (j.brief) E('brief').textContent = fmtBrief(j.brief);
 
-      // Update telemetry
       if (j.telemetry) {
         const rx = j.telemetry.rx_level_dBm;
-        E('rx').textContent = `RX: ${rx.toFixed(1)} dBm`;
+        E('rx').textContent = `${rx.toFixed(1)} dBm`;
         E('fill').style.width = pct(rx).toFixed(0) + '%';
+        
+        const quality = getQualityBadge(rx);
+        E('rxQuality').textContent = quality.text;
+        E('rxQuality').className = `badge ${quality.class}`;
       }
 
-      // Don't overwrite local controls from server - player controls their own antenna
-      // Just track what was last applied for comparison
       if (j.my_current) {
         lastAppliedAz = j.my_current.azimuth_ticks;
         lastAppliedTilt = j.my_current.tilt_deg;
         lastAppliedMast = j.my_current.mast_sections;
       }
 
-      // Update 3D visualization
       if (viz3d && j.my_current && j.other_current) {
         try {
           viz3d.updateFromPlayerData({
@@ -349,7 +448,6 @@ async function poll() {
 
 let polling = false;
 
-// Set up join button handler
 try {
   const joinBtn = E('join');
   if (joinBtn) {
