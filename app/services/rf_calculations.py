@@ -42,12 +42,15 @@ def height_bonus_db(h_tx_amsl: float, h_rx_amsl: float) -> float:
 def freq_penalty_db(tx_mhz: float, rx_mhz: float) -> float:
     """Calculate frequency offset penalty.
 
-    If tuned within 50 kHz, no penalty; otherwise heavy; 5 kHz per dB ramp.
+    If tuned within 1 MHz, no penalty; otherwise ramp at 50 kHz per dB.
+    This is less aggressive than the original 5 kHz/dB to make gameplay more forgiving
+    while still encouraging proper frequency tuning.
     """
     off_khz = abs(tx_mhz - rx_mhz) * 1000.0
-    if off_khz <= 50.0:
+    if off_khz <= 1000.0:  # Within 1 MHz = no penalty
         return 0.0
-    return min(40.0, (off_khz - 50.0) / 5.0)
+    # 50 kHz per dB ramp (was 5 kHz/dB - too aggressive)
+    return min(40.0, (off_khz - 1000.0) / 50.0)
 
 
 def compute_one_way_rx(sess, tx, rx):
@@ -122,6 +125,14 @@ def compute_one_way_rx(sess, tx, rx):
         - pen_freq
         + alignment_bonus
         + jitter
+    )
+
+    # Debug logging to help diagnose calculation issues
+    print(
+        f"[RF Calc] AZ loss: {loss_az:.2f} dB | TILT: {loss_tilt:.2f} dB | "
+        f"FREQ: {pen_freq:.2f} dB | HEIGHT: {bonus_h:.2f} dB | "
+        f"ALIGN: {alignment_bonus:.2f} dB | JITTER: {jitter:.2f} dB | "
+        f"BASE: {BASE_RX_DBM} dBm | RAW: {rx_dbm:.2f} dBm"
     )
 
     # Clamp to valid range

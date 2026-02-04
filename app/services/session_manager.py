@@ -89,19 +89,20 @@ def create_session(body: GMCreateBody) -> Session:
     body.distance_km = validate_distance(body.distance_km)
 
     s = Session()
-    # radio settings
-    s.A.tx_mhz, s.A.rx_mhz, s.A.local_ip, s.A.call_id = (
-        body.A_tx_MHz,
-        body.A_rx_MHz,
-        body.A_local_ip,
-        body.A_call_id,
-    )
-    s.B.tx_mhz, s.B.rx_mhz, s.B.local_ip, s.B.call_id = (
-        body.B_tx_MHz,
-        body.B_rx_MHz,
-        body.B_local_ip,
-        body.B_call_id,
-    )
+    # radio settings - ensure cross-band pairing for zero frequency penalty
+    # Node A: TX on freq1, RX on freq2
+    # Node B: TX on freq2, RX on freq1 (cross-matched)
+    s.A.tx_mhz = body.A_tx_MHz
+    s.A.rx_mhz = body.A_rx_MHz
+    s.A.local_ip = body.A_local_ip
+    s.A.call_id = body.A_call_id
+
+    # Auto-correct B's frequencies to match A's cross-band if not explicitly set
+    # This ensures A_tx -> B_rx and B_tx -> A_rx for zero penalty
+    s.B.tx_mhz = body.B_tx_MHz if body.B_tx_MHz != body.A_tx_MHz else body.A_rx_MHz
+    s.B.rx_mhz = body.B_rx_MHz if body.B_rx_MHz != body.A_rx_MHz else body.A_tx_MHz
+    s.B.local_ip = body.B_local_ip
+    s.B.call_id = body.B_call_id
     # elevations
     s.A.elev_asl_m = body.A_elev_asl_m
     s.B.elev_asl_m = body.B_elev_asl_m
