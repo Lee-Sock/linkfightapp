@@ -415,14 +415,36 @@ class Antenna3DVisualization {
         this.updateOtherAntennaPosition(data.otherAz, data.otherTilt, data.otherMast);
       }
     } else {
+      // GM mode: antennas are side by side, need to calculate relative bearings
+      // Antenna A is at (-10, 0, 0), Antenna B is at (10, 0, 0)
+      // Bearing from A to B is 90° (East), from B to A is 270° (West)
+      const bearingAToB = 90;  // B is to the East of A
+      const bearingBToA = 270; // A is to the West of B
+      
       if (data.myNode === "A") {
-        this.updateAntenna(this.antennaA, data.myAz, data.myTilt, data.myMast);
-        this.updateAntenna(this.antennaB, data.otherAz, data.otherTilt, data.otherMast);
+        // For GM view, calculate relative rotation from absolute azimuth
+        const relAzA = this.calculateRelativeAzimuth(data.myAz, bearingAToB);
+        const relAzB = this.calculateRelativeAzimuth(data.otherAz, bearingBToA);
+        this.updateAntenna(this.antennaA, relAzA, data.myTilt, data.myMast);
+        this.updateAntenna(this.antennaB, relAzB, data.otherTilt, data.otherMast);
       } else {
-        this.updateAntenna(this.antennaA, data.otherAz, data.otherTilt, data.otherMast);
-        this.updateAntenna(this.antennaB, data.myAz, data.myTilt, data.myMast);
+        const relAzA = this.calculateRelativeAzimuth(data.otherAz, bearingAToB);
+        const relAzB = this.calculateRelativeAzimuth(data.myAz, bearingBToA);
+        this.updateAntenna(this.antennaA, relAzA, data.otherTilt, data.otherMast);
+        this.updateAntenna(this.antennaB, relAzB, data.myTilt, data.myMast);
       }
     }
+  }
+
+  calculateRelativeAzimuth(absoluteAzimuthTicks, targetBearing) {
+    // Convert ticks to degrees
+    const absoluteDeg = (absoluteAzimuthTicks / 7200) * 360;
+    // Calculate relative rotation: how much to rotate from target direction
+    let relativeDeg = absoluteDeg - targetBearing;
+    // Normalize to 0-360
+    relativeDeg = ((relativeDeg % 360) + 360) % 360;
+    // Convert back to ticks
+    return Math.round((relativeDeg / 360) * 7200);
   }
 
   handleVisibilityChange() {
