@@ -250,16 +250,17 @@ class Antenna3DVisualization {
     if (!this.otherAntenna) return;
 
     // Position other antenna in the direction you're aiming
-    // Convert azimuth to radians
+    // Convert azimuth to radians (0=North, 1800=East, 3600=South, 5400=West)
     const azimuthRad = (azimuthTicks / 7200) * Math.PI * 2;
     const distance = 40;
 
-    const x = Math.sin(azimuthRad) * distance;
-    const z = -Math.cos(azimuthRad) * distance;
+    // Calculate position: x=East-West, z=North-South (negative Z is North in Three.js)
+    const x = Math.sin(azimuthRad) * distance;      // East (+) / West (-)
+    const z = -Math.cos(azimuthRad) * distance;     // North (-) / South (+)
 
     this.otherAntenna.position.set(x, 0, z);
 
-    // Update orientation
+    // Update orientation (the dish should face the same direction you're aiming)
     this.updateAntenna(this.otherAntenna, azimuthTicks, tiltDeg, mastSections);
   }
 
@@ -391,7 +392,9 @@ class Antenna3DVisualization {
     const element = antennaGroup.getObjectByName('element');
     if (element) {
       element.position.y = 2 + mastHeight;
-      element.rotation.y = azimuthRad;
+      // Fix: Invert rotation so 0 ticks (North) points to -Z (North in Three.js)
+      // Three.js rotation is CCW from +Z, but compass is CW from North (-Z)
+      element.rotation.y = Math.PI - azimuthRad;
       element.rotation.x = tiltRad;
     }
 
