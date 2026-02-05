@@ -16,17 +16,19 @@ let lastAppliedAz = 0;
 let lastAppliedTilt = 0;
 let lastAppliedMast = 1;
 
+// RX level is now 80-108 dB (lower = better)
+// 80 = perfect alignment, 108 = worst
 function pct(rx) {
-  const lo = -120, hi = -70;
-  return Math.max(0, Math.min(100, (rx - lo) / (hi - lo) * 100));
+  const best = 80, worst = 108;
+  // Invert percentage: 80 dB = 100%, 108 dB = 0%
+  return Math.max(0, Math.min(100, (worst - rx) / (worst - best) * 100));
 }
 
 function color(rx) {
-  if (rx < -93) return 'green';      // Best link
-  if (rx >= -95 && rx < -93) return 'orange';
-  if (rx >= -103 && rx < -95) return 'orange';
-  if (rx >= -110 && rx < -103) return 'red';
-  return 'red';  // Anything worse than -110
+  // Lower RX dB = better signal
+  if (rx <= 86) return 'green';       // Excellent (80-86 dB)
+  if (rx <= 93) return 'orange';      // Acceptable (87-93 dB)
+  return 'red';                        // Poor (94-108 dB)
 }
 
 function fmtBrief(b) {
@@ -313,7 +315,9 @@ async function poll() {
       // Update telemetry
       if (j.telemetry) {
         const rx = j.telemetry.rx_level_dBm;
-        E('rx').textContent = `RX: ${rx.toFixed(1)} dBm`;
+        const rxColor = color(rx);
+        E('rx').textContent = `RX: ${rx.toFixed(1)} dB`;
+        E('rx').style.color = rxColor === 'green' ? '#0a0' : rxColor === 'orange' ? '#cc0' : '#c00';
         E('fill').style.width = pct(rx).toFixed(0) + '%';
       }
 

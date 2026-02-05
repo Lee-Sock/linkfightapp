@@ -1,11 +1,11 @@
 // Gamemaster UI JavaScript
 
 const E = id => document.getElementById(id);
+// RX level is now 80-108 dB (lower = better)
 function cls(rx) {
-  if (rx >= -90 && rx <= -80) return 'ok';
-  if (rx >= -95 && rx < -90) return 'warn';
-  if (rx >= -105 && rx < -95) return 'warn';
-  return 'bad';
+  if (rx <= 86) return 'ok';       // Excellent (80-86 dB)
+  if (rx <= 93) return 'warn';     // Acceptable (87-93 dB)
+  return 'bad';                     // Poor (94-108 dB)
 }
 
 let viz3d = null;
@@ -108,10 +108,10 @@ async function poll() {
     E('sidRow').textContent = 'Session: ' + j.id;
     E('live').innerHTML = `
       <pre>
-Node 1: RX <span class="${cls(j.A.rx_level_dBm)}">${j.A.rx_level_dBm} dBm</span> | mast ${j.A.mast_sections} | az ${j.A.az_ticks} | tilt ${j.A.tilt_deg}° | Antenna Elev: ${j.A.antenna_elevation_m}m
+Node 1: RX <span class="${cls(j.A.rx_level_dBm)}">${j.A.rx_level_dBm.toFixed(1)} dB</span> | mast ${j.A.mast_sections} | az ${j.A.az_ticks} | tilt ${j.A.tilt_deg}° | Antenna Elev: ${j.A.antenna_elevation_m}m
         TX ${j.A.tx} MHz | RX ${j.A.rx} MHz | IP ${j.A.ip} | Call ${j.A.call_id}
         Ideal: az ${j.A.ideal_azimuth_ticks} (${j.A.ideal_azimuth_deg}°) | tilt ${j.A.ideal_tilt_deg}°
-Node 2: RX <span class="${cls(j.B.rx_level_dBm)}">${j.B.rx_level_dBm} dBm</span> | mast ${j.B.mast_sections} | az ${j.B.az_ticks} | tilt ${j.B.tilt_deg}° | Antenna Elev: ${j.B.antenna_elevation_m}m
+Node 2: RX <span class="${cls(j.B.rx_level_dBm)}">${j.B.rx_level_dBm.toFixed(1)} dB</span> | mast ${j.B.mast_sections} | az ${j.B.az_ticks} | tilt ${j.B.tilt_deg}° | Antenna Elev: ${j.B.antenna_elevation_m}m
         TX ${j.B.tx} MHz | RX ${j.B.rx} MHz | IP ${j.B.ip} | Call ${j.B.call_id}
         Ideal: az ${j.B.ideal_azimuth_ticks} (${j.B.ideal_azimuth_deg}°) | tilt ${j.B.ideal_tilt_deg}°
 Distance: ${j.distance_km} km
@@ -138,14 +138,33 @@ Distance: ${j.distance_km} km
     }
 
     // Update 3D visualization
+    // For GM view, we need to adjust azimuths so antennas face each other when aligned
+    // In the 3D scene: A is at x=-10, B is at x=+10
+    // For A to face B: visual azimuth should be 1800 ticks (90°, facing +X)
+    // For B to face A: visual azimuth should be 5400 ticks (270°, facing -X)
+    // Map player's actual azimuth relative to their ideal azimuth to the visual direction
     if (viz3d && j.A && j.B) {
       try {
+        // Calculate visual azimuths:
+        // When actual_az == ideal_az, antenna should face the other node
+        // visual_az = target_direction + (actual_az - ideal_az)
+        const idealAzA = j.A.ideal_azimuth_ticks || 0;
+        const idealAzB = j.B.ideal_azimuth_ticks || 0;
+
+        // A faces +X (1800 ticks) when aligned, B faces -X (5400 ticks) when aligned
+        let visualAzA = 1800 + (j.A.az_ticks - idealAzA);
+        let visualAzB = 5400 + (j.B.az_ticks - idealAzB);
+
+        // Normalize to 0-7200 range
+        visualAzA = ((visualAzA % 7200) + 7200) % 7200;
+        visualAzB = ((visualAzB % 7200) + 7200) % 7200;
+
         viz3d.updateFromPlayerData({
           myNode: 'A',  // Arbitrary, GM sees both
-          myAz: j.A.az_ticks,
+          myAz: visualAzA,
           myTilt: j.A.tilt_deg,
           myMast: j.A.mast_sections,
-          otherAz: j.B.az_ticks,
+          otherAz: visualAzB,
           otherTilt: j.B.tilt_deg,
           otherMast: j.B.mast_sections
         });

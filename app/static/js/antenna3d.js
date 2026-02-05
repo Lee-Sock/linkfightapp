@@ -46,9 +46,9 @@ class Antenna3DVisualization {
       // Create third-person environment with antenna
       this.createThirdPersonEnvironment();
     } else {
-      // GM mode - standard view
+      // GM mode - overhead/isometric view to see both antennas
       this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
-      this.camera.position.set(0, 15, 30);
+      this.camera.position.set(0, 20, 40);
       this.camera.lookAt(0, 5, 0);
       this.scene.background = new THREE.Color(0x1a1a1a);
 
@@ -128,7 +128,8 @@ class Antenna3DVisualization {
     this.myAntenna = this.createAntennaModel(myColor, { x: 0, y: 0, z: 0 }, myLabel);
     this.scene.add(this.myAntenna);
 
-    // Create the other player's antenna (positioned at target direction)
+    // Create the other player's antenna at FIXED position (north, -Z direction)
+    // This represents the target the player is trying to aim at
     const otherColor = this.myNode === 'A' ? 0xff8844 : 0x4488ff;
     const otherLabel = this.myNode === 'A' ? 'NODE 2 (TARGET)' : 'NODE 1 (TARGET)';
     this.otherAntenna = this.createAntennaModel(otherColor, { x: 0, y: 0, z: -40 }, otherLabel);
@@ -229,19 +230,8 @@ class Antenna3DVisualization {
   updateOtherAntennaPosition(azimuthTicks, tiltDeg, mastSections) {
     if (!this.otherAntenna) return;
 
-    // Calculate position based on where the other antenna should be
-    // Other antenna is at azimuth + 180 degrees (opposite direction)
-    const targetAz = (azimuthTicks + 3600) % 7200;
-    const azimuthRad = (targetAz / 7200) * Math.PI * 2;
-    const distance = 40;
-
-    const x = Math.sin(azimuthRad) * distance;
-    const z = -Math.cos(azimuthRad) * distance;
-
-    // Position the other antenna
-    this.otherAntenna.position.set(x, 0, z);
-
-    // Update the other antenna's orientation (azimuth, tilt, mast)
+    // Keep other antenna at FIXED position - don't move it around
+    // Only update its orientation (azimuth, tilt, mast)
     this.updateAntenna(this.otherAntenna, azimuthTicks, tiltDeg, mastSections);
   }
 
@@ -280,14 +270,32 @@ class Antenna3DVisualization {
 
   createGMEnvironment() {
     // Add ground plane with grid
-    const gridHelper = new THREE.GridHelper(50, 50, 0x444444, 0x222222);
+    const gridHelper = new THREE.GridHelper(80, 40, 0x444444, 0x222222);
     this.scene.add(gridHelper);
 
-    // Create both antennas
-    this.antennaA = this.createAntennaModel(0x4488ff, { x: -10, y: 0, z: 0 }, 'Node A');
-    this.antennaB = this.createAntennaModel(0xff8844, { x: 10, y: 0, z: 0 }, 'Node B');
+    // Create both antennas - positioned to face each other
+    // A is on left (-X), B is on right (+X)
+    // When aligned, A should face +X (toward B), B should face -X (toward A)
+    this.antennaA = this.createAntennaModel(0x4488ff, { x: -15, y: 0, z: 0 }, 'Node A');
+    this.antennaB = this.createAntennaModel(0xff8844, { x: 15, y: 0, z: 0 }, 'Node B');
     this.scene.add(this.antennaA);
     this.scene.add(this.antennaB);
+  }
+
+  updateGMCamera(maxMastSections) {
+    if (this.mode !== 'gm') return;
+
+    // Calculate camera distance based on tallest mast
+    const mastHeight = 2.0 + (maxMastSections - 1) * 1.67;
+    const antennaTop = 2 + mastHeight + 2;
+
+    // Camera needs to see both antennas (at x=-15 and x=+15) plus the beams
+    // Adjust height and distance based on mast height
+    const cameraHeight = Math.max(15, 10 + mastHeight * 0.8);
+    const cameraDistance = Math.max(35, 25 + mastHeight * 1.2);
+
+    this.camera.position.set(0, cameraHeight, cameraDistance);
+    this.camera.lookAt(0, mastHeight / 2 + 2, 0);
   }
 
   createAntennaModel(color, position, label) {
@@ -308,7 +316,7 @@ class Antenna3DVisualization {
     mast.name = 'mast';
     group.add(mast);
 
-    // Antenna element group (dish + direction cone)
+    // Antenna element group (dish + direction cone + beam)
     const antennaElement = new THREE.Group();
     antennaElement.name = 'element';
 
@@ -332,6 +340,28 @@ class Antenna3DVisualization {
     cone.rotation.x = Math.PI / 2;
     cone.position.z = -0.8;
     antennaElement.add(cone);
+
+    // DIRECTION BEAM - long visible ray showing where antenna points
+    // This is visible from any angle
+    const beamLength = 15;
+    const beamGeometry = new THREE.CylinderGeometry(0.08, 0.15, beamLength, 8);
+    const beamMaterial = new THREE.MeshBasicMaterial({
+      color: color,
+      transparent: true,
+      opacity: 0.7
+    });
+    const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+    beam.rotation.x = Math.PI / 2;  // Point along Z axis
+    beam.position.z = -beamLength / 2 - 1.5;  // Position in front of dish
+    antennaElement.add(beam);
+
+    // Beam tip arrow
+    const tipGeometry = new THREE.ConeGeometry(0.3, 0.8, 8);
+    const tipMaterial = new THREE.MeshBasicMaterial({ color: color });
+    const tip = new THREE.Mesh(tipGeometry, tipMaterial);
+    tip.rotation.x = Math.PI / 2;
+    tip.position.z = -beamLength - 1.5 - 0.4;
+    antennaElement.add(tip);
 
     antennaElement.position.y = 4;
     group.add(antennaElement);
@@ -395,19 +425,20 @@ class Antenna3DVisualization {
       // Update camera height only
       this.updateCameraForThirdPerson(data.myMast);
 
-      // Update other player's antenna position and orientation
+      // Update other player's antenna orientation (position is fixed)
       if (data.otherAz !== undefined) {
         this.updateOtherAntennaPosition(data.otherAz, data.otherTilt, data.otherMast);
       }
     } else {
       // GM mode: update both antennas
-      if (data.myNode === "A") {
-        this.updateAntenna(this.antennaA, data.myAz, data.myTilt, data.myMast);
-        this.updateAntenna(this.antennaB, data.otherAz, data.otherTilt, data.otherMast);
-      } else {
-        this.updateAntenna(this.antennaA, data.otherAz, data.otherTilt, data.otherMast);
-        this.updateAntenna(this.antennaB, data.myAz, data.myTilt, data.myMast);
-      }
+      // data.myAz and data.otherAz are already adjusted in gm.js to be visual azimuths
+      // that make antennas face each other when players are aligned
+      this.updateAntenna(this.antennaA, data.myAz, data.myTilt, data.myMast);
+      this.updateAntenna(this.antennaB, data.otherAz, data.otherTilt, data.otherMast);
+
+      // Update camera to accommodate mast heights
+      const maxMast = Math.max(data.myMast || 1, data.otherMast || 1);
+      this.updateGMCamera(maxMast);
     }
   }
 
