@@ -83,6 +83,23 @@ class Antenna3DVisualization {
     this.animate();
   }
 
+  setContainer(containerId) {
+    const newContainer = document.getElementById(containerId);
+    if (!newContainer) {
+      console.error('New container not found:', containerId);
+      return;
+    }
+
+    if (this.container !== newContainer) {
+      this.container = newContainer;
+      if (this.renderer && this.renderer.domElement) {
+        this.container.appendChild(this.renderer.domElement);
+        // Force resize update
+        this.onWindowResize();
+      }
+    }
+  }
+
   createDaytimeSky() {
     const canvas = document.createElement('canvas');
     canvas.width = 2;

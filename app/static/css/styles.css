@@ -707,20 +707,56 @@ input[type="range"] {
 }
 
 /* ========================================
-   PLAYER PAGE SPECIFIC
+   PLAYER PAGE SPECIFIC - UNIFIED RESPONSIVE
    ======================================== */
 
-/* Control Panel Layout */
-.control-panel {
+/* Ensure 3D canvas fills container */
+.viz-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Mobile-first: Stack all controls vertically */
+.control-layout {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+/* Control headers (shared by all controls) */
+.control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.control-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-gray-400);
+}
+
+.control-value {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  background: rgba(255,255,255,0.1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  min-width: 40px;
+  text-align: center;
 }
 
 .azimuth-control {
   background: var(--bg-input-dark);
   border-radius: var(--radius-md);
   padding: var(--space-4);
+  order: 1;
 }
 
 .azimuth-header {
@@ -748,14 +784,47 @@ input[type="range"] {
   border-radius: var(--radius-sm);
 }
 
-/* Azimuth Input Group */
-.azimuth-input-group {
+/* Azimuth Buttons - Stack vertically on mobile */
+.azimuth-buttons {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   gap: var(--space-2);
-  flex-wrap: wrap;
+  align-items: center;
 }
+
+.azimuth-buttons > button,
+.azimuth-buttons > input {
+  flex-shrink: 0;
+}
+
+/* Mobile: group buttons in rows */
+@media (max-width: 767px) {
+  .azimuth-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto auto auto;
+    gap: var(--space-2);
+    width: 100%;
+  }
+  
+  .btn-azimuth-adjust:nth-child(1),
+  .btn-azimuth-adjust:nth-child(2),
+  .btn-azimuth-adjust:nth-child(3) {
+    /* Top row: minus buttons */
+  }
+  
+  #az_input {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  
+  .btn-azimuth-adjust:nth-child(5),
+  .btn-azimuth-adjust:nth-child(6),
+  .btn-azimuth-adjust:nth-child(7) {
+    /* Bottom row: plus buttons */
+  }
+}
+
 
 .azimuth-number-input {
   width: 80px;
@@ -805,64 +874,84 @@ input[type="range"] {
   transform: translateY(0);
 }
 
-/* Mobile Azimuth Stacked Layout */
-.azimuth-mobile-stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-.azimuth-row {
-  display: flex;
-  gap: var(--space-2);
-  justify-content: center;
-  width: 100%;
-}
-
-.azimuth-minus .btn-azimuth-adjust {
+.btn-az-minus {
   background: var(--color-gray-600);
 }
 
-.azimuth-plus .btn-azimuth-adjust {
+.btn-az-plus {
   background: var(--color-primary-600);
 }
 
-.azimuth-value-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) 0;
+.btn-az-plus:hover {
+  background: var(--color-primary-700);
 }
 
-.azimuth-value-row .azimuth-number-input {
-  width: 100px;
-  font-size: 1.25rem;
-  padding: var(--space-2) var(--space-3);
-}
-
-.azimuth-unit {
-  color: var(--color-gray-400);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Mobile: Stack mast/tilt below 3D view */
-.controls-mobile {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.control-slider-mobile {
+/* Mast and Tilt Controls - Mobile stacked, desktop vertical sliders */
+.mast-control,
+.tilt-control {
   background: var(--bg-input-dark);
   border-radius: var(--radius-md);
   padding: var(--space-4);
 }
 
-/* Desktop: Sidebars */
+.mast-control {
+  order: 3;
+}
+
+.tilt-control {
+  order: 4;
+}
+
+/* 3D Visualization */
+#antenna3d-container {
+  order: 2;
+  min-height: 300px;
+  aspect-ratio: 16 / 9;
+}
+
+/* Slider wrapper for mobile (horizontal) and desktop (vertical) */
+.slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.range-label {
+  font-size: 0.625rem;
+  color: var(--color-gray-500);
+}
+
+/* Mobile: horizontal sliders */
+@media (max-width: 767px) {
+  .slider-wrapper {
+    flex-direction: row;
+  }
+  
+  .slider-vertical {
+    writing-mode: initial;
+    direction: initial;
+    width: 100%;
+    height: auto;
+  }
+  
+  .range-min {
+    order: 1;
+  }
+  
+  input[type="range"] {
+    order: 2;
+    flex: 1;
+  }
+  
+  .range-max {
+    order: 3;
+  }
+}
+
+/* Desktop: Grid layout with vertical sliders on sides */
 @media (min-width: 768px) {
-  .control-panel {
+  .control-layout {
     display: grid;
     grid-template-columns: 70px 1fr 70px;
     grid-template-rows: auto 1fr;
@@ -871,70 +960,71 @@ input[type="range"] {
   
   .azimuth-control {
     grid-column: 1 / -1;
+    grid-row: 1;
+    order: initial;
   }
   
-  .mast-sidebar {
+  .azimuth-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+  
+  .mast-control {
     grid-column: 1;
     grid-row: 2;
-    background: var(--bg-input-dark);
-    border-radius: var(--radius-md);
-    padding: var(--space-4);
+    order: initial;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    min-height: 0;
-  }
-  
-  .viz-3d-container {
-    grid-column: 2;
-    grid-row: 2;
     min-height: 400px;
   }
   
-  .tilt-sidebar {
+  #antenna3d-container {
+    grid-column: 2;
+    grid-row: 2;
+    order: initial;
+    min-height: 400px;
+    aspect-ratio: initial;
+  }
+  
+  .tilt-control {
     grid-column: 3;
     grid-row: 2;
-    background: var(--bg-input-dark);
-    border-radius: var(--radius-md);
-    padding: var(--space-4);
+    order: initial;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    min-height: 0;
+    min-height: 400px;
   }
   
-  .sidebar-label {
-    font-size: 0.625rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-gray-400);
-    text-align: center;
-    margin-bottom: var(--space-2);
-  }
-  
-  .sidebar-value {
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: white;
-    background: rgba(255,255,255,0.1);
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-sm);
-    min-width: 40px;
-    text-align: center;
-    margin-top: var(--space-2);
-  }
-  
-  .sidebar-range-labels {
-    display: flex;
+  .slider-wrapper {
     flex-direction: column;
-    justify-content: space-between;
-    font-size: 0.625rem;
-    color: var(--color-gray-500);
-    margin: var(--space-2) 0;
+    flex: 1;
+    width: auto;
+    min-height: 150px;
+  }
+  
+  .slider-vertical {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 30px;
+    flex: 1;
+  }
+  
+  .range-max {
+    order: 1;
+  }
+  
+  input[type="range"] {
+    order: 2;
+  }
+  
+  .range-min {
+    order: 3;
   }
 }
 

@@ -63,101 +63,52 @@
                 </div>
             </div>
 
-            <!-- Mobile Layout (stacked) -->
-            <div class="controls-mobile" id="mobileControls">
-                <!-- Azimuth -->
-                <div class="control-slider-mobile">
-                    <div class="slider-label">
-                        <span>Azimuth</span>
-                    </div>
-                    <div class="azimuth-mobile-stack">
-                        <div class="azimuth-row azimuth-minus">
-                            <button type="button" class="btn-azimuth-adjust" data-delta="-1000" data-target="mobile">-1000</button>
-                            <button type="button" class="btn-azimuth-adjust" data-delta="-100" data-target="mobile">-100</button>
-                            <button type="button" class="btn-azimuth-adjust" data-delta="-1" data-target="mobile">-1</button>
-                        </div>
-                        <div class="azimuth-row azimuth-value-row">
-                            <input type="number" id="az_input_mobile" class="azimuth-number-input" min="0" max="7200" value="0">
-                            <span class="azimuth-unit">ticks</span>
-                        </div>
-                        <div class="azimuth-row azimuth-plus">
-                            <button type="button" class="btn-azimuth-adjust" data-delta="1" data-target="mobile">+1</button>
-                            <button type="button" class="btn-azimuth-adjust" data-delta="100" data-target="mobile">+100</button>
-                            <button type="button" class="btn-azimuth-adjust" data-delta="1000" data-target="mobile">+1000</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3D Visualization -->
-                <div id="antenna3d-container" class="viz-container" style="height: 350px;"></div>
-
-                <!-- Mast -->
-                <div class="control-slider-mobile">
-                    <div class="slider-label">
-                        <span>Mast Sections</span>
-                        <span class="slider-value" id="mast_display_mobile">1</span>
-                    </div>
-                    <input type="range" id="mast_slider_mobile" class="slider-mast" min="1" max="9" value="1">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.625rem; color: var(--color-gray-500); margin-top: var(--space-1);">
-                        <span>1</span>
-                        <span>5</span>
-                        <span>9</span>
-                    </div>
-                </div>
-
-                <!-- Tilt -->
-                <div class="control-slider-mobile">
-                    <div class="slider-label">
-                        <span>Tilt</span>
-                        <span class="slider-value" id="tilt_display_mobile">0°</span>
-                    </div>
-                    <input type="range" id="tilt_slider_mobile" class="slider-tilt" min="-15" max="15" value="0">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.625rem; color: var(--color-gray-500); margin-top: var(--space-1);">
-                        <span>-15°</span>
-                        <span>0°</span>
-                        <span>+15°</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Desktop Layout (sidebars) -->
-            <div class="control-panel hidden" id="desktopControls">
-                <!-- Azimuth (full width) -->
+            <!-- Unified Responsive Controls -->
+            <div class="control-layout" id="controls">
+                <!-- Azimuth Control -->
                 <div class="azimuth-control">
                     <div class="azimuth-header">
                         <span class="azimuth-label">Azimuth</span>
-                        <span class="azimuth-value" id="az_display_desktop">0 ticks</span>
+                        <span class="azimuth-value" id="az_display">0 ticks</span>
                     </div>
-                    <div class="azimuth-input-group">
-                        <button type="button" class="btn-azimuth-adjust" data-delta="-1000" data-target="desktop">-1000</button>
-                        <button type="button" class="btn-azimuth-adjust" data-delta="-100" data-target="desktop">-100</button>
-                        <button type="button" class="btn-azimuth-adjust" data-delta="-1" data-target="desktop">-1</button>
-                        <input type="number" id="az_input_desktop" class="azimuth-number-input" min="0" max="7200" value="0">
-                        <button type="button" class="btn-azimuth-adjust" data-delta="1" data-target="desktop">+1</button>
-                        <button type="button" class="btn-azimuth-adjust" data-delta="100" data-target="desktop">+100</button>
-                        <button type="button" class="btn-azimuth-adjust" data-delta="1000" data-target="desktop">+1000</button>
+                    <div class="azimuth-buttons">
+                        <button type="button" class="btn-azimuth-adjust btn-az-minus" data-delta="-1000">-1000</button>
+                        <button type="button" class="btn-azimuth-adjust btn-az-minus" data-delta="-100">-100</button>
+                        <button type="button" class="btn-azimuth-adjust btn-az-minus" data-delta="-1">-1</button>
+                        <input type="number" id="az_input" class="azimuth-number-input" min="0" max="7200" value="0">
+                        <button type="button" class="btn-azimuth-adjust btn-az-plus" data-delta="1">+1</button>
+                        <button type="button" class="btn-azimuth-adjust btn-az-plus" data-delta="100">+100</button>
+                        <button type="button" class="btn-azimuth-adjust btn-az-plus" data-delta="1000">+1000</button>
                     </div>
                 </div>
 
-                <!-- Mast Sidebar -->
-                <div class="mast-sidebar">
-                    <span class="sidebar-label">Mast</span>
-                    <span style="color: var(--color-gray-400); font-size: 0.625rem;">9</span>
-                    <input type="range" id="mast_slider_desktop" class="slider-vertical slider-mast" min="1" max="9" value="1">
-                    <span style="color: var(--color-gray-400); font-size: 0.625rem;">1</span>
-                    <div class="sidebar-value" id="mast_display_desktop">1</div>
+                <!-- Mast Control Sidebar -->
+                <div class="mast-control">
+                    <div class="control-header">
+                        <span class="control-label">Mast</span>
+                        <span class="control-value" id="mast_display">1</span>
+                    </div>
+                    <div class="slider-wrapper">
+                        <span class="range-label range-max">9</span>
+                        <input type="range" id="mast_slider" class="slider-vertical slider-mast" min="1" max="9" value="1">
+                        <span class="range-label range-min">1</span>
+                    </div>
                 </div>
 
                 <!-- 3D Visualization -->
-                <div id="antenna3d-container-desktop" class="viz-container viz-3d-container"></div>
+                <div id="antenna3d-container" class="viz-container"></div>
 
-                <!-- Tilt Sidebar -->
-                <div class="tilt-sidebar">
-                    <span class="sidebar-label">Tilt</span>
-                    <span style="color: var(--color-gray-400); font-size: 0.625rem;">+15°</span>
-                    <input type="range" id="tilt_slider_desktop" class="slider-vertical slider-tilt" min="-15" max="15" value="0">
-                    <span style="color: var(--color-gray-400); font-size: 0.625rem;">-15°</span>
-                    <div class="sidebar-value" id="tilt_display_desktop">0°</div>
+                <!-- Tilt Control Sidebar -->
+                <div class="tilt-control">
+                    <div class="control-header">
+                        <span class="control-label">Tilt</span>
+                        <span class="control-value" id="tilt_display">0°</span>
+                    </div>
+                    <div class="slider-wrapper">
+                        <span class="range-label range-max">+15°</span>
+                        <input type="range" id="tilt_slider" class="slider-vertical slider-tilt" min="-15" max="15" value="0">
+                        <span class="range-label range-min">-15°</span>
+                    </div>
                 </div>
             </div>
 
@@ -223,8 +174,8 @@
     <!-- Three.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <!-- Our custom scripts -->
-    <script src="/static/js/antenna3d.js?v=5"></script>
-    <script src="/static/js/player.js?v=5"></script>
+    <script src="/static/js/antenna3d.js?v=6"></script>
+    <script src="/static/js/player.js?v=6"></script>
     
     <script>
         lucide.createIcons();

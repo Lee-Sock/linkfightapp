@@ -1,4 +1,4 @@
-// Player UI JavaScript
+// Player UI JavaScript - Unified Responsive Version
 
 const E = id => document.getElementById(id);
 
@@ -16,8 +16,8 @@ let lastAppliedAz = 0;
 let lastAppliedTilt = 0;
 let lastAppliedMast = 1;
 
-// Detect mobile layout
-const isMobile = () => window.innerWidth < 768;
+// Detect mobile layout - align with CSS breakpoint
+const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
 
 function pct(rx) {
   const lo = -120, hi = -70;
@@ -63,27 +63,14 @@ function showToast(message, type = 'success') {
   }, 3000);
 }
 
-// Update display values and sync controls
+// Update display values - now only one set of controls
 function updateDisplays() {
-  const mobile = isMobile();
-  
-  if (mobile) {
-    // Mobile controls
-    E('az_input_mobile').value = currentAz;
-    E('az_display_mobile').textContent = currentAz + ' ticks';
-    E('mast_slider_mobile').value = currentMast;
-    E('mast_display_mobile').textContent = currentMast;
-    E('tilt_slider_mobile').value = currentTilt;
-    E('tilt_display_mobile').textContent = currentTilt + '°';
-  } else {
-    // Desktop controls
-    E('az_input_desktop').value = currentAz;
-    E('az_display_desktop').textContent = currentAz + ' ticks';
-    E('mast_slider_desktop').value = currentMast;
-    E('mast_display_desktop').textContent = currentMast;
-    E('tilt_slider_desktop').value = currentTilt;
-    E('tilt_display_desktop').textContent = currentTilt + '°';
-  }
+  E('az_input').value = currentAz;
+  E('az_display').textContent = currentAz + ' ticks';
+  E('mast_slider').value = currentMast;
+  E('mast_display').textContent = currentMast;
+  E('tilt_slider').value = currentTilt;
+  E('tilt_display').textContent = currentTilt + '°';
 }
 
 // Update 3D visualization locally
@@ -99,11 +86,12 @@ let applyTimeout = null;
 function debounceApply() {
   if (applyTimeout) clearTimeout(applyTimeout);
   applyTimeout = setTimeout(() => {
+    console.log('[DEBUG] debounceApply: calling apply()');
     apply();
   }, 150);
 }
 
-// Control value adjusters with clamping (for keyboard)
+// Control value adjusters with clamping (for keyboard and buttons)
 function adjustAz(delta) {
   currentAz = Math.max(0, Math.min(7200, currentAz + delta));
   hasUnappliedChanges = true;
@@ -128,107 +116,69 @@ function adjustMast(delta) {
   debounceApply();
 }
 
-// Setup azimuth button handlers
-function setupAzimuthButtons() {
-  // Mobile azimuth buttons
-  document.querySelectorAll('#mobileControls .btn-azimuth-adjust').forEach(btn => {
-    btn.onclick = () => {
-      const delta = parseInt(btn.dataset.delta);
-      adjustAz(delta);
-    };
-  });
-  
-  // Desktop azimuth buttons
-  document.querySelectorAll('#desktopControls .btn-azimuth-adjust').forEach(btn => {
-    btn.onclick = () => {
-      const delta = parseInt(btn.dataset.delta);
-      adjustAz(delta);
-    };
-  });
-  
-  // Mobile azimuth input
-  E('az_input_mobile').onchange = () => {
-    currentAz = Math.max(0, Math.min(7200, parseInt(E('az_input_mobile').value) || 0));
-    hasUnappliedChanges = true;
-    updateDisplays();
-    updateVisualization();
-    debounceApply();
-  };
-  
-  // Desktop azimuth input
-  E('az_input_desktop').onchange = () => {
-    currentAz = Math.max(0, Math.min(7200, parseInt(E('az_input_desktop').value) || 0));
-    hasUnappliedChanges = true;
-    updateDisplays();
-    updateVisualization();
-    debounceApply();
-  };
-}
-
-// Setup controls based on current layout
+// Setup unified controls - attach handlers once
 function setupControls() {
-  const mobile = isMobile();
+  console.log('[DEBUG] setupControls: attaching event handlers');
   
-  // Setup azimuth buttons (both mobile and desktop)
-  setupAzimuthButtons();
+  // Azimuth buttons - use event delegation
+  document.querySelectorAll('.btn-azimuth-adjust').forEach(btn => {
+    btn.onclick = () => {
+      const delta = parseInt(btn.dataset.delta, 10);
+      console.log('[DEBUG] Azimuth button clicked, delta:', delta);
+      adjustAz(delta);
+    };
+  });
   
-  if (mobile) {
-    // Mobile mast slider
-    E('mast_slider_mobile').oninput = () => {
-      currentMast = parseInt(E('mast_slider_mobile').value);
+  // Azimuth input
+  const azInput = E('az_input');
+  if (azInput) {
+    azInput.onchange = () => {
+      currentAz = Math.max(0, Math.min(7200, parseInt(azInput.value) || 0));
+      hasUnappliedChanges = true;
+      updateDisplays();
+      updateVisualization();
+      debounceApply();
+    };
+  }
+  
+  // Mast slider
+  const mastSlider = E('mast_slider');
+  if (mastSlider) {
+    mastSlider.oninput = () => {
+      currentMast = parseInt(mastSlider.value, 10);
+      E('mast_display').textContent = currentMast;
       hasUnappliedChanges = true;
       updateVisualization();
     };
-    E('mast_slider_mobile').onchange = () => apply();
+    mastSlider.onchange = () => {
+      console.log('[DEBUG] Mast slider changed, calling apply()');
+      apply();
+    };
+  }
 
-    // Mobile tilt slider
-    E('tilt_slider_mobile').oninput = () => {
-      currentTilt = parseInt(E('tilt_slider_mobile').value);
-      E('tilt_display_mobile').textContent = currentTilt + '°';
+  // Tilt slider
+  const tiltSlider = E('tilt_slider');
+  if (tiltSlider) {
+    tiltSlider.oninput = () => {
+      currentTilt = parseInt(tiltSlider.value, 10);
+      E('tilt_display').textContent = currentTilt + '°';
       hasUnappliedChanges = true;
       updateVisualization();
     };
-    E('tilt_slider_mobile').onchange = () => apply();
-  } else {
-    // Desktop mast slider
-    E('mast_slider_desktop').oninput = () => {
-      currentMast = parseInt(E('mast_slider_desktop').value);
-      hasUnappliedChanges = true;
-      updateVisualization();
+    tiltSlider.onchange = () => {
+      console.log('[DEBUG] Tilt slider changed, calling apply()');
+      apply();
     };
-    E('mast_slider_desktop').onchange = () => apply();
-
-    // Desktop tilt slider
-    E('tilt_slider_desktop').oninput = () => {
-      currentTilt = parseInt(E('tilt_slider_desktop').value);
-      E('tilt_display_desktop').textContent = currentTilt + '°';
-      hasUnappliedChanges = true;
-      updateVisualization();
-    };
-    E('tilt_slider_desktop').onchange = () => apply();
   }
 }
 
-// Handle window resize to switch layouts
+// Handle window resize - no need to switch layouts now
 function handleResize() {
-  const mobile = isMobile();
-  const mobileControls = E('mobileControls');
-  const desktopControls = E('desktopControls');
+  console.log('[DEBUG] handleResize called, isMobile:', isMobile());
   
-  if (mobile) {
-    mobileControls.classList.remove('hidden');
-    desktopControls.classList.add('hidden');
-    // Re-init viz container if needed
-    if (viz3d) {
-      viz3d.container = E('antenna3d-container');
-    }
-  } else {
-    mobileControls.classList.add('hidden');
-    desktopControls.classList.remove('hidden');
-    // Re-init viz container if needed
-    if (viz3d) {
-      viz3d.container = E('antenna3d-container-desktop');
-    }
+  // Just ensure 3D visualization adjusts to container size
+  if (viz3d && viz3d.onWindowResize) {
+    viz3d.onWindowResize();
   }
   
   updateDisplays();
@@ -295,8 +245,7 @@ console.log('Player.js: Script loaded, initializing...');
 
 readQueryDefaults();
 
-// Setup initial layout
-handleResize();
+// Setup controls once
 window.addEventListener('resize', handleResize);
 
 try {
@@ -355,7 +304,7 @@ async function join() {
   lucide.createIcons();
   showToast(`Joined as ${team === 'A' ? 'Node 1' : 'Node 2'}!`);
 
-  // Initialize 3D visualization
+  // Initialize 3D visualization - now only one container
   if (!viz3d) {
     console.log('[DEBUG] Join - Initializing 3D visualization...');
     try {
@@ -368,8 +317,7 @@ async function join() {
         return;
       }
       
-      const containerId = isMobile() ? 'antenna3d-container' : 'antenna3d-container-desktop';
-      viz3d = new Antenna3DVisualization(containerId, 'player', team);
+      viz3d = new Antenna3DVisualization('antenna3d-container', 'player', team);
       console.log('[DEBUG] 3D visualization initialized successfully');
 
       if (j.my_current && j.other_current) {
@@ -394,6 +342,9 @@ async function apply() {
   const team = E('team').value;
   if (!sid) return;
 
+  const payload = { azimuth_ticks: currentAz, tilt_deg: currentTilt, mast_sections: currentMast };
+  console.log('[DEBUG] apply() - sending payload to server:', payload, 'sid:', sid, 'team:', team);
+
   try {
     const response = await fetch(`/simple/${sid}/team/${team}/set`, {
       method: 'POST',
@@ -405,11 +356,20 @@ async function apply() {
       })
     });
 
+    console.log('[DEBUG] apply() - response status:', response.status);
     if (response.ok) {
       hasUnappliedChanges = false;
       lastAppliedAz = currentAz;
       lastAppliedTilt = currentTilt;
       lastAppliedMast = currentMast;
+      console.log('[DEBUG] apply() - update successful');
+    } else {
+      try {
+        const text = await response.text();
+        console.error('[DEBUG] apply() - server error response:', text);
+      } catch (e) {
+        console.error('[DEBUG] apply() - server error, could not read body');
+      }
     }
   } catch (error) {
     console.error('Error applying changes:', error);
@@ -422,58 +382,42 @@ async function poll() {
     await new Promise(r => setTimeout(r, 900));
     const sid = E('sid').value.trim();
     const team = E('team').value;
-    console.log('[DEBUG] Poll iteration - sid:', sid, 'team:', team);
     if (!sid) {
-      console.log('[DEBUG] No sid, skipping');
       continue;
     }
 
     try {
       const r = await fetch(`/simple/${sid}/player_view?team=${team}`);
-      console.log('[DEBUG] Fetch response status:', r.status);
       if (!r.ok) {
-        console.log('[DEBUG] Response not ok, skipping');
         continue;
       }
 
       const j = await r.json();
-      console.log('[DEBUG] Response JSON:', j);
 
       if (j.brief) {
-        console.log('[DEBUG] Updating brief');
         E('brief').textContent = fmtBrief(j.brief);
       }
 
       if (j.telemetry) {
-        console.log('[DEBUG] Telemetry found:', j.telemetry);
         const rx = j.telemetry.rx_level_dBm;
-        console.log('[DEBUG] RX value:', rx, 'Type:', typeof rx);
         
-        // Check if elements exist
         const rxEl = E('rx');
         const fillEl = E('fill');
         const qualityEl = E('rxQuality');
-        console.log('[DEBUG] Elements - rx:', !!rxEl, 'fill:', !!fillEl, 'quality:', !!qualityEl);
         
         if (rxEl) {
           rxEl.textContent = `${rx.toFixed(1)} dBm`;
-          console.log('[DEBUG] Updated rx element');
         }
         if (fillEl) {
           const pctValue = pct(rx);
           fillEl.style.width = pctValue.toFixed(0) + '%';
-          console.log('[DEBUG] Updated fill element to:', pctValue.toFixed(0) + '%');
         }
         
         const quality = getQualityBadge(rx);
-        console.log('[DEBUG] Quality:', quality);
         if (qualityEl) {
           qualityEl.textContent = quality.text;
           qualityEl.className = `badge ${quality.class}`;
-          console.log('[DEBUG] Updated quality element');
         }
-      } else {
-        console.log('[DEBUG] No telemetry in response');
       }
 
       if (j.my_current) {
