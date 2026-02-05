@@ -343,12 +343,13 @@ class Antenna3DVisualization {
     ring.position.z = 0.01;
     antennaElement.add(ring);
 
-    // Direction cone
+    // Direction cone - points forward (positive Z) to show aiming direction
     const coneGeometry = this.getSharedGeometry('cone', 0.4, 1.5, 12);
     const coneMaterial = new THREE.MeshLambertMaterial({ color: color });
     const cone = new THREE.Mesh(coneGeometry, coneMaterial);
-    cone.rotation.x = Math.PI / 2;
-    cone.position.z = -0.8;
+    // Point forward (positive Z) so it aims toward the other antenna
+    cone.rotation.x = -Math.PI / 2;
+    cone.position.z = 0.8;
     antennaElement.add(cone);
 
     antennaElement.position.y = 4;
@@ -415,36 +416,18 @@ class Antenna3DVisualization {
         this.updateOtherAntennaPosition(data.otherAz, data.otherTilt, data.otherMast);
       }
     } else {
-      // GM mode: antennas are side by side, need to calculate relative bearings
-      // Antenna A is at (-10, 0, 0), Antenna B is at (10, 0, 0)
-      // Bearing from A to B is 90° (East), from B to A is 270° (West)
-      const bearingAToB = 90;  // B is to the East of A
-      const bearingBToA = 270; // A is to the West of B
+      // GM mode: Just use the absolute azimuth values directly
+      // The updateAntenna function will handle the rotation correctly
+      console.log('[3D Debug] GM Update - A:', data.myAz, 'B:', data.otherAz);
       
       if (data.myNode === "A") {
-        // For GM view, calculate relative rotation from absolute azimuth
-        const relAzA = this.calculateRelativeAzimuth(data.myAz, bearingAToB);
-        const relAzB = this.calculateRelativeAzimuth(data.otherAz, bearingBToA);
-        this.updateAntenna(this.antennaA, relAzA, data.myTilt, data.myMast);
-        this.updateAntenna(this.antennaB, relAzB, data.otherTilt, data.otherMast);
+        this.updateAntenna(this.antennaA, data.myAz, data.myTilt, data.myMast);
+        this.updateAntenna(this.antennaB, data.otherAz, data.otherTilt, data.otherMast);
       } else {
-        const relAzA = this.calculateRelativeAzimuth(data.otherAz, bearingAToB);
-        const relAzB = this.calculateRelativeAzimuth(data.myAz, bearingBToA);
-        this.updateAntenna(this.antennaA, relAzA, data.otherTilt, data.otherMast);
-        this.updateAntenna(this.antennaB, relAzB, data.myTilt, data.myMast);
+        this.updateAntenna(this.antennaA, data.otherAz, data.otherTilt, data.otherMast);
+        this.updateAntenna(this.antennaB, data.myAz, data.myTilt, data.myMast);
       }
     }
-  }
-
-  calculateRelativeAzimuth(absoluteAzimuthTicks, targetBearing) {
-    // Convert ticks to degrees
-    const absoluteDeg = (absoluteAzimuthTicks / 7200) * 360;
-    // Calculate relative rotation: how much to rotate from target direction
-    let relativeDeg = absoluteDeg - targetBearing;
-    // Normalize to 0-360
-    relativeDeg = ((relativeDeg % 360) + 360) % 360;
-    // Convert back to ticks
-    return Math.round((relativeDeg / 360) * 7200);
   }
 
   handleVisibilityChange() {

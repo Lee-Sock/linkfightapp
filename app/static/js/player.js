@@ -307,48 +307,70 @@ try {
 }
 
 async function join() {
+  console.log('[DEBUG] Join function called');
   const sid = E('sid').value.trim();
   const team = E('team').value;
   currentTeam = team;
-  if (!sid) return;
+  console.log('[DEBUG] Join - sid:', sid, 'team:', team);
+  if (!sid) {
+    console.log('[DEBUG] Join - no sid, returning');
+    return;
+  }
 
   const r = await fetch(`/simple/${sid}/player_view?team=${team}`);
+  console.log('[DEBUG] Join - fetch status:', r.status);
   if (!r.ok) {
+    console.log('[DEBUG] Join - fetch failed');
     E('joinStatus').innerHTML = '<span class="badge badge-error">Failed to join session</span>';
     return;
   }
 
   const j = await r.json();
-  if (j.brief) E('brief').textContent = fmtBrief(j.brief);
+  console.log('[DEBUG] Join - response JSON:', j);
   
-  currentAz = 0;
-  currentTilt = 0;
-  currentMast = 1;
+  if (j.brief) {
+    console.log('[DEBUG] Join - setting brief');
+    E('brief').textContent = fmtBrief(j.brief);
+  }
+  
+  // Initialize current values from server if available
+  if (j.my_current) {
+    console.log('[DEBUG] Join - initializing from server state:', j.my_current);
+    currentAz = j.my_current.azimuth_ticks || 0;
+    currentTilt = j.my_current.tilt_deg || 0;
+    currentMast = j.my_current.mast_sections || 1;
+  } else {
+    console.log('[DEBUG] Join - no my_current, using defaults');
+    currentAz = 0;
+    currentTilt = 0;
+    currentMast = 1;
+  }
   updateDisplays();
 
+  console.log('[DEBUG] Join - calling apply()');
   await apply();
 
-  console.log('Join successful, showing status');
+  console.log('[DEBUG] Join - successful, updating status');
   E('joinStatus').innerHTML = `<span class="badge badge-success"><i data-lucide="check-circle" style="width: 12px; height: 12px;"></i> Joined as ${team === 'A' ? 'Node 1' : 'Node 2'}</span>`;
   lucide.createIcons();
   showToast(`Joined as ${team === 'A' ? 'Node 1' : 'Node 2'}!`);
 
   // Initialize 3D visualization
   if (!viz3d) {
-    console.log('Initializing 3D visualization...');
+    console.log('[DEBUG] Join - Initializing 3D visualization...');
     try {
       if (typeof THREE === 'undefined') {
-        console.error('THREE.js not loaded!');
+        console.error('[DEBUG] THREE.js not loaded!');
         return;
       }
       if (typeof Antenna3DVisualization === 'undefined') {
-        console.error('Antenna3DVisualization class not loaded!');
+        console.error('[DEBUG] Antenna3DVisualization class not loaded!');
         return;
       }
       
       const containerId = isMobile() ? 'antenna3d-container' : 'antenna3d-container-desktop';
       viz3d = new Antenna3DVisualization(containerId, 'player', team);
-      console.log('3D visualization initialized successfully');
+      console.log('[DEBUG] 3D visualization initialized successfully');
 
       if (j.my_current && j.other_current) {
         viz3d.updateFromPlayerData({
@@ -362,7 +384,7 @@ async function join() {
         });
       }
     } catch (error) {
-      console.error('Error initializing 3D visualization:', error);
+      console.error('[DEBUG] Error initializing 3D visualization:', error);
     }
   }
 }
@@ -395,28 +417,63 @@ async function apply() {
 }
 
 async function poll() {
+  console.log('[DEBUG] Poll function started');
   while (true) {
     await new Promise(r => setTimeout(r, 900));
     const sid = E('sid').value.trim();
     const team = E('team').value;
-    if (!sid) continue;
+    console.log('[DEBUG] Poll iteration - sid:', sid, 'team:', team);
+    if (!sid) {
+      console.log('[DEBUG] No sid, skipping');
+      continue;
+    }
 
     try {
       const r = await fetch(`/simple/${sid}/player_view?team=${team}`);
-      if (!r.ok) continue;
+      console.log('[DEBUG] Fetch response status:', r.status);
+      if (!r.ok) {
+        console.log('[DEBUG] Response not ok, skipping');
+        continue;
+      }
 
       const j = await r.json();
+      console.log('[DEBUG] Response JSON:', j);
 
-      if (j.brief) E('brief').textContent = fmtBrief(j.brief);
+      if (j.brief) {
+        console.log('[DEBUG] Updating brief');
+        E('brief').textContent = fmtBrief(j.brief);
+      }
 
       if (j.telemetry) {
+        console.log('[DEBUG] Telemetry found:', j.telemetry);
         const rx = j.telemetry.rx_level_dBm;
-        E('rx').textContent = `${rx.toFixed(1)} dBm`;
-        E('fill').style.width = pct(rx).toFixed(0) + '%';
+        console.log('[DEBUG] RX value:', rx, 'Type:', typeof rx);
+        
+        // Check if elements exist
+        const rxEl = E('rx');
+        const fillEl = E('fill');
+        const qualityEl = E('rxQuality');
+        console.log('[DEBUG] Elements - rx:', !!rxEl, 'fill:', !!fillEl, 'quality:', !!qualityEl);
+        
+        if (rxEl) {
+          rxEl.textContent = `${rx.toFixed(1)} dBm`;
+          console.log('[DEBUG] Updated rx element');
+        }
+        if (fillEl) {
+          const pctValue = pct(rx);
+          fillEl.style.width = pctValue.toFixed(0) + '%';
+          console.log('[DEBUG] Updated fill element to:', pctValue.toFixed(0) + '%');
+        }
         
         const quality = getQualityBadge(rx);
-        E('rxQuality').textContent = quality.text;
-        E('rxQuality').className = `badge ${quality.class}`;
+        console.log('[DEBUG] Quality:', quality);
+        if (qualityEl) {
+          qualityEl.textContent = quality.text;
+          qualityEl.className = `badge ${quality.class}`;
+          console.log('[DEBUG] Updated quality element');
+        }
+      } else {
+        console.log('[DEBUG] No telemetry in response');
       }
 
       if (j.my_current) {
