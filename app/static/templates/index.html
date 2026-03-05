@@ -1,29 +1,44 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <title>Link Fight</title>
-    <style>
-        body{font:14px system-ui;margin:0;padding:20px;background:#f5f5f5}
-        .wrap{max-width:600px;margin:40px auto;background:white;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
-        h1{margin:0 0 20px;color:#333}
-        p{color:#666;line-height:1.6}
-        a{color:#0066cc;text-decoration:none;font-weight:500}
-        a:hover{text-decoration:underline}
-        .links{margin-top:20px}
-        .links a{display:block;padding:10px;margin:8px 0;background:#f0f0f0;border-radius:5px}
-    </style>
+    <title>Link Fight - Antenna Alignment Training</title>
+    <link rel="stylesheet" href="/static/css/styles.css"/>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <div class="wrap">
-        <h1>Link Fight</h1>
-        <p>This is a simple 2 node link fight simulation.</p>
-        <div class="links">
-            <a href="/gm">Gamemaster Interface</a>
-            <a href="/player">Player Interface</a>
-            <a href="/health">Health Check</a>
+    <div class="container container-narrow">
+        <div class="hero">
+            <i data-lucide="radio-tower" class="hero-icon"></i>
+            <h1 class="hero-title">Link Fight</h1>
+            <p class="hero-subtitle">Master antenna alignment through competitive training scenarios. Compete head-to-head to achieve optimal signal strength.</p>
+            
+            <div class="action-cards">
+                <a href="/gm" class="action-card">
+                    <i data-lucide="settings-2" class="action-card-icon"></i>
+                    <div class="action-card-title">Gamemaster</div>
+                    <div class="action-card-desc">Create and manage training sessions with custom scenarios</div>
+                </a>
+                
+                <a href="/player" class="action-card">
+                    <i data-lucide="gamepad-2" class="action-card-icon"></i>
+                    <div class="action-card-title">Player</div>
+                    <div class="action-card-desc">Join a session and compete to align your antenna</div>
+                </a>
+            </div>
+            
+            <div style="margin-top: var(--space-8);">
+                <a href="/health" class="nav-link" style="display: inline-flex; justify-content: center;">
+                    <i data-lucide="activity" class="nav-link-icon" style="width: 16px; height: 16px;"></i>
+                    <span>System Health Check</span>
+                </a>
+            </div>
         </div>
     </div>
+    
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 </html>

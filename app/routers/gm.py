@@ -10,15 +10,18 @@ from app.constants import BASE_ANTENNA_HEIGHT_M, SECTION_H_M
 
 router = APIRouter(tags=["gamemaster"])
 
+
 @router.post("/simple/gm/create")
 def simple_gm_create(body: GMCreateBody):
     s = create_session(body)
     return {"id": s.id}
 
+
 @router.put("/simple/gm/{sid}/update")
-def simple_gm_update(sid: str, body: GMCreateBody):
-    update_session(sid, body)
+async def simple_gm_update(sid: str, body: GMCreateBody):
+    await update_session(sid, body)
     return {"ok": True}
+
 
 @router.get("/simple/{sid}/gm_view")
 def simple_gm_view(sid: str):
@@ -27,8 +30,12 @@ def simple_gm_view(sid: str):
     rxB, brgAB, tiltB = compute_one_way_rx(s, s.A, s.B)  # what B receives (A→B)
 
     # Calculate antenna elevations
-    ant_elev_A = s.A.elev_asl_m + BASE_ANTENNA_HEIGHT_M + (s.A.mast_sections - 1) * SECTION_H_M
-    ant_elev_B = s.B.elev_asl_m + BASE_ANTENNA_HEIGHT_M + (s.B.mast_sections - 1) * SECTION_H_M
+    ant_elev_A = (
+        s.A.elev_asl_m + BASE_ANTENNA_HEIGHT_M + (s.A.mast_sections - 1) * SECTION_H_M
+    )
+    ant_elev_B = (
+        s.B.elev_asl_m + BASE_ANTENNA_HEIGHT_M + (s.B.mast_sections - 1) * SECTION_H_M
+    )
 
     # Calculate ideal settings for GM view (thresholds)
     # For Node A pointing at Node B
@@ -50,8 +57,12 @@ def simple_gm_view(sid: str):
             "az_ticks": s.A.az_ticks,
             "az_deg": round(ticks_to_deg(s.A.az_ticks), 2),
             "tilt_deg": round(s.A.tilt_deg, 2),
-            "tx": s.A.tx_mhz, "rx": s.A.rx_mhz, "ip": s.A.local_ip, "call_id": s.A.call_id,
-            "rx_level_dBm": round(rxA, 1), "color": rx_color(rxA),
+            "tx": s.A.tx_mhz,
+            "rx": s.A.rx_mhz,
+            "ip": s.A.local_ip,
+            "call_id": s.A.call_id,
+            "rx_level_dBm": round(rxA, 1),
+            "color": rx_color(rxA),
             # GM-only thresholds
             "ideal_azimuth_ticks": ideal_az_A_ticks,
             "ideal_azimuth_deg": round(ideal_az_A, 2),
@@ -64,8 +75,12 @@ def simple_gm_view(sid: str):
             "az_ticks": s.B.az_ticks,
             "az_deg": round(ticks_to_deg(s.B.az_ticks), 2),
             "tilt_deg": round(s.B.tilt_deg, 2),
-            "tx": s.B.tx_mhz, "rx": s.B.rx_mhz, "ip": s.B.local_ip, "call_id": s.B.call_id,
-            "rx_level_dBm": round(rxB, 1), "color": rx_color(rxB),
+            "tx": s.B.tx_mhz,
+            "rx": s.B.rx_mhz,
+            "ip": s.B.local_ip,
+            "call_id": s.B.call_id,
+            "rx_level_dBm": round(rxB, 1),
+            "color": rx_color(rxB),
             # GM-only thresholds
             "ideal_azimuth_ticks": ideal_az_B_ticks,
             "ideal_azimuth_deg": round(ideal_az_B, 2),

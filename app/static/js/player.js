@@ -1,4 +1,4 @@
-// Player UI JavaScript
+// Player UI JavaScript - Unified Responsive Version
 
 const E = id => document.getElementById(id);
 
@@ -16,33 +16,57 @@ let lastAppliedAz = 0;
 let lastAppliedTilt = 0;
 let lastAppliedMast = 1;
 
-// RX level is now 80-108 dB (lower = better)
-// 80 = perfect alignment, 108 = worst
+// Detect mobile layout - align with CSS breakpoint
+const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
+
 function pct(rx) {
-  const best = 80, worst = 108;
-  // Invert percentage: 80 dB = 100%, 108 dB = 0%
-  return Math.max(0, Math.min(100, (worst - rx) / (worst - best) * 100));
+  const lo = -120, hi = -70;
+  return Math.max(0, Math.min(100, (rx - lo) / (hi - lo) * 100));
 }
 
-function color(rx) {
-  // Lower RX dB = better signal
-  if (rx <= 86) return 'green';       // Excellent (80-86 dB)
-  if (rx <= 93) return 'orange';      // Acceptable (87-93 dB)
-  return 'red';                        // Poor (94-108 dB)
+function getQualityBadge(rx) {
+  if (rx >= -80) return { text: 'Excellent', class: 'badge-success' };
+  if (rx >= -90) return { text: 'Good', class: 'badge-success' };
+  if (rx >= -95) return { text: 'Fair', class: 'badge-warning' };
+  if (rx >= -103) return { text: 'Poor', class: 'badge-warning' };
+  return { text: 'Critical', class: 'badge-error' };
 }
 
 function fmtBrief(b) {
   return `Node: ${b.node} | Local IP: ${b.local_ip} | TX: ${b.tx_MHz} MHz | RX: ${b.rx_MHz} MHz | `
-    + `Distant end: ${b.distant_end} | Site elev: ${b.site_elevation_m} m | Azimuth sector: ${b.azimuth_sector_deg}`;
+    + `Distant end: ${b.distant_end} | Site elev: ${b.site_elevation_m} m | Azimuth sector: ${b.azimuth_sector_deg}°`;
 }
 
-// Debounce timer for auto-apply
-let applyTimeout = null;
+// Toast notification helper
+function showToast(message, type = 'success') {
+  const container = E('toastContainer');
+  if (!container) return;
+  
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  
+  const icon = type === 'success' ? 'check-circle' : 
+               type === 'error' ? 'x-circle' : 
+               type === 'warning' ? 'alert-triangle' : 'info';
+  
+  toast.innerHTML = `
+    <i data-lucide="${icon}" style="width: 20px; height: 20px;"></i>
+    <span>${message}</span>
+  `;
+  
+  container.appendChild(toast);
+  lucide.createIcons();
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideIn 0.3s ease reverse';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
 
-// Update display values and sync sliders
+// Update display values - now only one set of controls
 function updateDisplays() {
-  E('az_slider').value = currentAz;
   E('az_input').value = currentAz;
+  E('az_display').textContent = currentAz + ' ticks';
   E('mast_slider').value = currentMast;
   E('mast_display').textContent = currentMast;
   E('tilt_slider').value = currentTilt;
@@ -56,15 +80,18 @@ function updateVisualization() {
   }
 }
 
-// Debounced apply function for smooth sliding
+// Debounce timer for auto-apply
+let applyTimeout = null;
+
 function debounceApply() {
   if (applyTimeout) clearTimeout(applyTimeout);
   applyTimeout = setTimeout(() => {
+    console.log('[DEBUG] debounceApply: calling apply()');
     apply();
   }, 150);
 }
 
-// Control value adjusters with clamping (for keyboard)
+// Control value adjusters with clamping (for keyboard and buttons)
 function adjustAz(delta) {
   currentAz = Math.max(0, Math.min(7200, currentAz + delta));
   hasUnappliedChanges = true;
@@ -89,52 +116,76 @@ function adjustMast(delta) {
   debounceApply();
 }
 
-// Slider control handlers
+// Setup unified controls - attach handlers once
 function setupControls() {
-  // Azimuth slider - auto-apply with debounce
-  E('az_slider').oninput = () => {
-    currentAz = parseInt(E('az_slider').value);
-    E('az_input').value = currentAz;
-    hasUnappliedChanges = true;
-    updateVisualization();
-    debounceApply();
-  };
-
-  // Azimuth numeric input
-  E('az_input').onchange = () => {
-    currentAz = Math.max(0, Math.min(7200, parseInt(E('az_input').value) || 0));
-    E('az_slider').value = currentAz;
-    hasUnappliedChanges = true;
-    updateVisualization();
-    debounceApply();
-  };
-
+  console.log('[DEBUG] setupControls: attaching event handlers');
+  
+  // Azimuth buttons - use event delegation
+  document.querySelectorAll('.btn-azimuth-adjust').forEach(btn => {
+    btn.onclick = () => {
+      const delta = parseInt(btn.dataset.delta, 10);
+      console.log('[DEBUG] Azimuth button clicked, delta:', delta);
+      adjustAz(delta);
+    };
+  });
+  
+  // Azimuth input
+  const azInput = E('az_input');
+  if (azInput) {
+    azInput.onchange = () => {
+      currentAz = Math.max(0, Math.min(7200, parseInt(azInput.value) || 0));
+      hasUnappliedChanges = true;
+      updateDisplays();
+      updateVisualization();
+      debounceApply();
+    };
+  }
+  
   // Mast slider
-  E('mast_slider').oninput = () => {
-    currentMast = parseInt(E('mast_slider').value);
-    E('mast_display').textContent = currentMast;
-    hasUnappliedChanges = true;
-    updateVisualization();
-  };
-  E('mast_slider').onchange = () => {
-    apply();  // Apply on release
-  };
+  const mastSlider = E('mast_slider');
+  if (mastSlider) {
+    mastSlider.oninput = () => {
+      currentMast = parseInt(mastSlider.value, 10);
+      E('mast_display').textContent = currentMast;
+      hasUnappliedChanges = true;
+      updateVisualization();
+    };
+    mastSlider.onchange = () => {
+      console.log('[DEBUG] Mast slider changed, calling apply()');
+      apply();
+    };
+  }
 
   // Tilt slider
-  E('tilt_slider').oninput = () => {
-    currentTilt = parseInt(E('tilt_slider').value);
-    E('tilt_display').textContent = currentTilt + '°';
-    hasUnappliedChanges = true;
-    updateVisualization();
-  };
-  E('tilt_slider').onchange = () => {
-    apply();  // Apply on release
-  };
+  const tiltSlider = E('tilt_slider');
+  if (tiltSlider) {
+    tiltSlider.oninput = () => {
+      currentTilt = parseInt(tiltSlider.value, 10);
+      E('tilt_display').textContent = currentTilt + '°';
+      hasUnappliedChanges = true;
+      updateVisualization();
+    };
+    tiltSlider.onchange = () => {
+      console.log('[DEBUG] Tilt slider changed, calling apply()');
+      apply();
+    };
+  }
+}
+
+// Handle window resize - no need to switch layouts now
+function handleResize() {
+  console.log('[DEBUG] handleResize called, isMobile:', isMobile());
+  
+  // Just ensure 3D visualization adjusts to container size
+  if (viz3d && viz3d.onWindowResize) {
+    viz3d.onWindowResize();
+  }
+  
+  updateDisplays();
 }
 
 // Keyboard controls
 document.addEventListener('keydown', (e) => {
-  // Only handle if not typing in an input field
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 
   switch(e.key) {
@@ -190,13 +241,13 @@ function readQueryDefaults() {
   }
 }
 
-// Initialize everything when script loads
 console.log('Player.js: Script loaded, initializing...');
 
-// Read URL params FIRST
 readQueryDefaults();
 
-// Then setup controls
+// Setup controls once
+window.addEventListener('resize', handleResize);
+
 try {
   setupControls();
   console.log('Player.js: Controls initialized');
@@ -205,52 +256,70 @@ try {
 }
 
 async function join() {
+  console.log('[DEBUG] Join function called');
   const sid = E('sid').value.trim();
   const team = E('team').value;
   currentTeam = team;
-  if (!sid) return;
+  console.log('[DEBUG] Join - sid:', sid, 'team:', team);
+  if (!sid) {
+    console.log('[DEBUG] Join - no sid, returning');
+    return;
+  }
 
   const r = await fetch(`/simple/${sid}/player_view?team=${team}`);
+  console.log('[DEBUG] Join - fetch status:', r.status);
   if (!r.ok) {
-    E('joinStatus').textContent = 'Failed to join';
-    E('joinStatus').className = 'kv';
+    console.log('[DEBUG] Join - fetch failed');
+    E('joinStatus').innerHTML = '<span class="badge badge-error">Failed to join session</span>';
     return;
   }
 
   const j = await r.json();
-  if (j.brief) E('brief').textContent = fmtBrief(j.brief);
-  // Don't load server values - start fresh at az=0, tilt=0, mast=1
-  // Player will aim their antenna from scratch
-  currentAz = 0;
-  currentTilt = 0;
-  currentMast = 1;
+  console.log('[DEBUG] Join - response JSON:', j);
+  
+  if (j.brief) {
+    console.log('[DEBUG] Join - setting brief');
+    E('brief').textContent = fmtBrief(j.brief);
+  }
+  
+  // Initialize current values from server if available
+  if (j.my_current) {
+    console.log('[DEBUG] Join - initializing from server state:', j.my_current);
+    currentAz = j.my_current.azimuth_ticks || 0;
+    currentTilt = j.my_current.tilt_deg || 0;
+    currentMast = j.my_current.mast_sections || 1;
+  } else {
+    console.log('[DEBUG] Join - no my_current, using defaults');
+    currentAz = 0;
+    currentTilt = 0;
+    currentMast = 1;
+  }
   updateDisplays();
 
-  // Apply initial values to server
+  console.log('[DEBUG] Join - calling apply()');
   await apply();
 
-  // Show joined status
-  console.log('Join successful, showing status');
-  E('joinStatus').textContent = '✓ Joined as ' + (team === 'A' ? 'Node 1' : 'Node 2');
-  E('joinStatus').className = 'kv status-joined';
+  console.log('[DEBUG] Join - successful, updating status');
+  E('joinStatus').innerHTML = `<span class="badge badge-success"><i data-lucide="check-circle" style="width: 12px; height: 12px;"></i> Joined as ${team === 'A' ? 'Node 1' : 'Node 2'}</span>`;
+  lucide.createIcons();
+  showToast(`Joined as ${team === 'A' ? 'Node 1' : 'Node 2'}!`);
 
-  // Initialize 3D visualization
+  // Initialize 3D visualization - now only one container
   if (!viz3d) {
-    console.log('Initializing 3D visualization...');
+    console.log('[DEBUG] Join - Initializing 3D visualization...');
     try {
       if (typeof THREE === 'undefined') {
-        console.error('THREE.js not loaded!');
+        console.error('[DEBUG] THREE.js not loaded!');
         return;
       }
       if (typeof Antenna3DVisualization === 'undefined') {
-        console.error('Antenna3DVisualization class not loaded!');
+        console.error('[DEBUG] Antenna3DVisualization class not loaded!');
         return;
       }
-      // Initialize in player mode with current team
+      
       viz3d = new Antenna3DVisualization('antenna3d-container', 'player', team);
-      console.log('3D visualization initialized successfully');
+      console.log('[DEBUG] 3D visualization initialized successfully');
 
-      // Initial update with both antenna states
       if (j.my_current && j.other_current) {
         viz3d.updateFromPlayerData({
           myNode: team,
@@ -263,7 +332,7 @@ async function join() {
         });
       }
     } catch (error) {
-      console.error('Error initializing 3D visualization:', error);
+      console.error('[DEBUG] Error initializing 3D visualization:', error);
     }
   }
 }
@@ -272,6 +341,9 @@ async function apply() {
   const sid = E('sid').value.trim();
   const team = E('team').value;
   if (!sid) return;
+
+  const payload = { azimuth_ticks: currentAz, tilt_deg: currentTilt, mast_sections: currentMast };
+  console.log('[DEBUG] apply() - sending payload to server:', payload, 'sid:', sid, 'team:', team);
 
   try {
     const response = await fetch(`/simple/${sid}/team/${team}/set`, {
@@ -284,12 +356,20 @@ async function apply() {
       })
     });
 
+    console.log('[DEBUG] apply() - response status:', response.status);
     if (response.ok) {
-      // Mark as applied
       hasUnappliedChanges = false;
       lastAppliedAz = currentAz;
       lastAppliedTilt = currentTilt;
       lastAppliedMast = currentMast;
+      console.log('[DEBUG] apply() - update successful');
+    } else {
+      try {
+        const text = await response.text();
+        console.error('[DEBUG] apply() - server error response:', text);
+      } catch (e) {
+        console.error('[DEBUG] apply() - server error, could not read body');
+      }
     }
   } catch (error) {
     console.error('Error applying changes:', error);
@@ -297,39 +377,55 @@ async function apply() {
 }
 
 async function poll() {
+  console.log('[DEBUG] Poll function started');
   while (true) {
     await new Promise(r => setTimeout(r, 900));
     const sid = E('sid').value.trim();
     const team = E('team').value;
-    if (!sid) continue;
+    if (!sid) {
+      continue;
+    }
 
     try {
       const r = await fetch(`/simple/${sid}/player_view?team=${team}`);
-      if (!r.ok) continue;
+      if (!r.ok) {
+        continue;
+      }
 
       const j = await r.json();
 
-      // Update brief
-      if (j.brief) E('brief').textContent = fmtBrief(j.brief);
-
-      // Update telemetry
-      if (j.telemetry) {
-        const rx = j.telemetry.rx_level_dBm;
-        const rxColor = color(rx);
-        E('rx').textContent = `RX: ${rx.toFixed(1)} dB`;
-        E('rx').style.color = rxColor === 'green' ? '#0a0' : rxColor === 'orange' ? '#cc0' : '#c00';
-        E('fill').style.width = pct(rx).toFixed(0) + '%';
+      if (j.brief) {
+        E('brief').textContent = fmtBrief(j.brief);
       }
 
-      // Don't overwrite local controls from server - player controls their own antenna
-      // Just track what was last applied for comparison
+      if (j.telemetry) {
+        const rx = j.telemetry.rx_level_dBm;
+        
+        const rxEl = E('rx');
+        const fillEl = E('fill');
+        const qualityEl = E('rxQuality');
+        
+        if (rxEl) {
+          rxEl.textContent = `${rx.toFixed(1)} dBm`;
+        }
+        if (fillEl) {
+          const pctValue = pct(rx);
+          fillEl.style.width = pctValue.toFixed(0) + '%';
+        }
+        
+        const quality = getQualityBadge(rx);
+        if (qualityEl) {
+          qualityEl.textContent = quality.text;
+          qualityEl.className = `badge ${quality.class}`;
+        }
+      }
+
       if (j.my_current) {
         lastAppliedAz = j.my_current.azimuth_ticks;
         lastAppliedTilt = j.my_current.tilt_deg;
         lastAppliedMast = j.my_current.mast_sections;
       }
 
-      // Update 3D visualization
       if (viz3d && j.my_current && j.other_current) {
         try {
           viz3d.updateFromPlayerData({
@@ -353,7 +449,6 @@ async function poll() {
 
 let polling = false;
 
-// Set up join button handler
 try {
   const joinBtn = E('join');
   if (joinBtn) {
