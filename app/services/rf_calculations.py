@@ -102,10 +102,11 @@ def compute_one_way_rx(sess, tx, rx):
     if tx_h <= 0 or rx_h <= 0:
         raise ValueError("Antenna heights must be positive")
 
-    # Ideal tilt for TX side (what tilt does the transmitter need to aim at the receiver?)
-    height_diff_m = rx_h - tx_h
+    # Ideal tilt based on SITE elevation difference only (not mast height)
+    # Mast changes affect height bonus/mismatch but shouldn't create tilt requirements
+    site_diff_m = rx.elev_asl_m - tx.elev_asl_m
     distance_m = max(1.0, D * 1000.0)
-    raw_tilt = (height_diff_m / distance_m) * TILT_AMPLIFICATION
+    raw_tilt = (site_diff_m / distance_m) * TILT_AMPLIFICATION
     ideal_tilt_tx = max(-TILT_RANGE_DEG, min(TILT_RANGE_DEG, raw_tilt))
     ideal_tilt_rx = max(-TILT_RANGE_DEG, min(TILT_RANGE_DEG, -raw_tilt))
     tilt_err_tx = abs(tx.tilt_deg - ideal_tilt_tx)
