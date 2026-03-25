@@ -504,8 +504,8 @@ class Antenna3DVisualization {
     if (!element) return null;
     element.updateWorldMatrix(true, false);
     const quat = element.getWorldQuaternion(new THREE.Quaternion());
-    // Local -Z is the direction the concave dish opening faces (toward feed horn side)
-    const forward = new THREE.Vector3(0, 0, -1);
+    // Local +Z is the direction the concave dish opening faces (feed horn side)
+    const forward = new THREE.Vector3(0, 0, 1);
     forward.applyQuaternion(quat);
     return forward.normalize();
   }
