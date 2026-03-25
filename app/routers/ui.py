@@ -11,7 +11,7 @@ def root():
     # Serve the index.html file
     template_path = os.path.join("app", "static", "templates", "index.html")
     if os.path.exists(template_path):
-        with open(template_path, "r") as f:
+        with open(template_path, "r", encoding="utf-8") as f:
             return HTMLResponse(f.read())
     # Fallback inline HTML if file doesn't exist yet
     return HTMLResponse("""
@@ -54,7 +54,7 @@ def health():
 def player_ui():
     template_path = os.path.join("app", "static", "templates", "player.html")
     if os.path.exists(template_path):
-        with open(template_path, "r") as f:
+        with open(template_path, "r", encoding="utf-8") as f:
             return HTMLResponse(f.read())
     return HTMLResponse("Player UI template not found")
 
@@ -62,6 +62,6 @@ def player_ui():
 def gm_ui():
     template_path = os.path.join("app", "static", "templates", "gm.html")
     if os.path.exists(template_path):
-        with open(template_path, "r") as f:
+        with open(template_path, "r", encoding="utf-8") as f:
             return HTMLResponse(f.read())
     return HTMLResponse("GM UI template not found")

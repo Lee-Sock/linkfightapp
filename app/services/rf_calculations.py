@@ -3,7 +3,8 @@
 import math
 import random
 from app.constants import (
-    BASE_RX_DBM,
+    RX_BEST_DB,
+    HEIGHT_BONUS_PER_SECTION,
     TILT_RANGE_DEG,
     SECTION_H_M,
     BASE_ANTENNA_HEIGHT_M,
@@ -28,15 +29,14 @@ def tilt_loss_db(tilt_err_deg: float) -> float:
     return min(18.0, 0.05 * (tilt_err_deg**2) + 0.25 * abs(tilt_err_deg))
 
 
-def height_bonus_db(h_tx_amsl: float, h_rx_amsl: float) -> float:
-    """Calculate height bonus based on antenna elevations.
+def height_bonus_db(sections_tx: int, sections_rx: int) -> float:
+    """Calculate height bonus based on mast sections.
 
-    Bonus grows with geometric mean of heights; capped ~8 dB.
+    Each extra section (above baseline of 1) on either side adds
+    HEIGHT_BONUS_PER_SECTION dB. Range: 0.0 to 2.4 dB.
     """
-    if h_tx_amsl <= 0 or h_rx_amsl <= 0:
-        return 0.0
-    gmean = math.sqrt(h_tx_amsl * h_rx_amsl)
-    return min(8.0, 2.0 * math.log(max(1.0, gmean)))
+    extra = max(0, sections_tx - 1) + max(0, sections_rx - 1)
+    return HEIGHT_BONUS_PER_SECTION * extra
 
 
 def freq_penalty_db(tx_mhz: float, rx_mhz: float) -> float:
@@ -101,41 +101,34 @@ def compute_one_way_rx(sess, tx, rx):
     # Loss/bonus calculations
     loss_az = azimuth_loss_db(az_err)
     loss_tilt = tilt_loss_db(tilt_err)
-    bonus_h = height_bonus_db(tx_h, rx_h)
+    bonus_h = height_bonus_db(tx.mast_sections, rx.mast_sections)
     pen_freq = freq_penalty_db(tx.tx_mhz, rx.rx_mhz)
 
     # Deterministic jitter based on session seed (not time-based for reproducibility)
-    # Use a pseudo-random but deterministic value based on session seed and current values
     jitter_seed = int(sess._seed * 1000) + int(az_err * 10) + int(tilt_err * 10)
     random.seed(jitter_seed)
     jitter = random.uniform(-0.2, 0.2)
     random.seed()  # Reset seed
 
-    # Alignment bonus calculation
-    az_factor = max(0.0, 1.0 - (az_err / 30.0))
-    tilt_factor = max(0.0, 1.0 - (tilt_err / TILT_RANGE_DEG))
-    alignment_bonus = 12.0 * az_factor * tilt_factor
-
     # Calculate final RX
     rx_dbm = (
-        BASE_RX_DBM
+        RX_BEST_DB
         + bonus_h
         - loss_az
         - loss_tilt
         - pen_freq
-        + alignment_bonus
         + jitter
     )
 
-    # Debug logging to help diagnose calculation issues
+    # Debug logging
     print(
         f"[RF Calc] AZ loss: {loss_az:.2f} dB | TILT: {loss_tilt:.2f} dB | "
         f"FREQ: {pen_freq:.2f} dB | HEIGHT: {bonus_h:.2f} dB | "
-        f"ALIGN: {alignment_bonus:.2f} dB | JITTER: {jitter:.2f} dB | "
-        f"BASE: {BASE_RX_DBM} dBm | RAW: {rx_dbm:.2f} dBm"
+        f"JITTER: {jitter:.2f} dB | "
+        f"BASE: {RX_BEST_DB} dBm | RAW: {rx_dbm:.2f} dBm"
     )
 
     # Clamp to valid range
-    rx_dbm = max(-120.0, min(-70.0, rx_dbm))
+    rx_dbm = max(-120.0, min(-80.0, rx_dbm))
 
     return rx_dbm, brg_tx_to_rx, ideal_tilt

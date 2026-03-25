@@ -1260,6 +1260,144 @@ input[type="range"] {
 }
 
 /* ========================================
+   GM MILITARY DARK THEME
+   ======================================== */
+body.gm-theme {
+  background: #0d1117;
+  color: #c9d1d9;
+}
+
+.gm-theme .container {
+  max-width: 1400px;
+}
+
+.gm-theme .card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.gm-theme .card-header {
+  border-bottom-color: #30363d;
+}
+
+.gm-theme .card-title {
+  color: #58a6ff;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.gm-theme .card-subtitle {
+  color: #6e7681;
+}
+
+.gm-theme h1 {
+  color: #58a6ff;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.gm-theme .form-label {
+  color: #8b949e;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+}
+
+.gm-theme .form-input,
+.gm-theme .form-select {
+  background: #0d1117;
+  border-color: #30363d;
+  color: #c9d1d9;
+  font-family: 'Courier New', monospace;
+}
+
+.gm-theme .form-input:focus,
+.gm-theme .form-select:focus {
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+.gm-theme .btn-primary {
+  background: #238636;
+  border-color: #2ea043;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.gm-theme .btn-primary:hover {
+  background: #2ea043;
+}
+
+.gm-theme .nav-link {
+  color: #58a6ff;
+}
+
+.gm-theme .text-muted,
+.gm-theme .text-secondary {
+  color: #6e7681 !important;
+}
+
+.gm-theme .live-telemetry {
+  gap: var(--space-2);
+}
+
+.gm-theme .telemetry-card {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+}
+
+.gm-theme .telemetry-label {
+  color: #6e7681;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+}
+
+.gm-theme .telemetry-value {
+  color: #c9d1d9;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+.gm-theme .telemetry-value.success {
+  color: #3fb950;
+}
+
+.gm-theme .telemetry-value.warning {
+  color: #d29922;
+}
+
+.gm-theme .telemetry-value.error {
+  color: #f85149;
+}
+
+.gm-theme .session-link {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+}
+
+.gm-theme .session-link:hover {
+  border-color: #58a6ff;
+}
+
+.gm-theme .badge {
+  font-family: 'Courier New', monospace;
+}
+
+.gm-theme .viz-container {
+  border: 1px solid #30363d;
+}
+
+/* ========================================
    PRINT STYLES
    ======================================== */
 @media print {
@@ -1268,11 +1406,11 @@ input[type="range"] {
     border: 1px solid var(--color-gray-300);
     break-inside: avoid;
   }
-  
+
   .btn {
     display: none;
   }
-  
+
   body {
     background: white;
   }

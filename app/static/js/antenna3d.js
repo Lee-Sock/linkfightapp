@@ -1,4 +1,4 @@
-// Three.js 3D Antenna Visualization - Optimized & Daytime Theme
+// Three.js 3D Antenna Visualization
 
 class Antenna3DVisualization {
   constructor(containerId, mode = 'player', myNode = 'A') {
@@ -22,11 +22,18 @@ class Antenna3DVisualization {
     
     // Shared geometries for performance
     this.sharedGeometries = {};
-    
+
     // Current state
     this.currentAzimuth = 0;
     this.currentTilt = 0;
     this.currentMast = 1;
+
+    // GM mode: terrain mounds and signal beams
+    this.terrainA = null;
+    this.terrainB = null;
+    this.beamA = null;
+    this.beamB = null;
+    this.gmLayoutInitialized = false;
 
     this.init();
   }
@@ -48,9 +55,9 @@ class Antenna3DVisualization {
       this.createThirdPersonEnvironment();
     } else {
       this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 500);
-      this.camera.position.set(0, 15, 30);
+      this.camera.position.set(20, 20, 35);
       this.camera.lookAt(0, 5, 0);
-      this.scene.background = new THREE.Color(0x87CEEB);
+      this.scene.background = this.createMilitarySky();
       this.createGMEnvironment();
     }
 
@@ -63,13 +70,28 @@ class Antenna3DVisualization {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));  // Limit pixel ratio
     this.container.appendChild(this.renderer.domElement);
 
-    // Bright daytime lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-    this.scene.add(ambientLight);
+    // Orbit controls — click and drag to rotate camera
+    if (typeof THREE.OrbitControls !== 'undefined') {
+      this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+      this.controls.enableDamping = true;
+      this.controls.dampingFactor = 0.05;
+      this.controls.target.set(0, 5, 0);
+    }
 
-    const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
-    sunLight.position.set(50, 100, 50);
-    this.scene.add(sunLight);
+    // Lighting — dimmer for GM military theme
+    if (this.mode === 'gm') {
+      const ambientLight = new THREE.AmbientLight(0xccddee, 0.4);
+      this.scene.add(ambientLight);
+      const dirLight = new THREE.DirectionalLight(0xaabbcc, 0.6);
+      dirLight.position.set(30, 80, 40);
+      this.scene.add(dirLight);
+    } else {
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      this.scene.add(ambientLight);
+      const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+      sunLight.position.set(50, 100, 50);
+      this.scene.add(sunLight);
+    }
 
     // Handle window resize
     this.resizeHandler = () => this.onWindowResize();
@@ -303,26 +325,212 @@ class Antenna3DVisualization {
     this.updateCameraForThirdPerson(mastSections);
   }
 
+  createMilitarySky() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 2;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+    gradient.addColorStop(0, '#0a0e14');
+    gradient.addColorStop(0.3, '#111b21');
+    gradient.addColorStop(0.5, '#1a2a1a');
+    gradient.addColorStop(0.65, '#1e2e1e');
+    gradient.addColorStop(0.7, '#2a3a2a');
+    gradient.addColorStop(1, '#1a2618');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 2, 256);
+    return new THREE.CanvasTexture(canvas);
+  }
+
   createGMEnvironment() {
-    // Ground plane
-    const groundGeometry = new THREE.PlaneGeometry(50, 50);
+    // Dark military ground
+    const groundGeometry = new THREE.PlaneGeometry(120, 120);
     const groundMaterial = new THREE.MeshLambertMaterial({
-      color: 0x90EE90,
+      color: 0x2a3a2a,
       side: THREE.DoubleSide
     });
     const ground = new THREE.Mesh(groundGeometry, groundMaterial);
     ground.rotation.x = -Math.PI / 2;
     this.scene.add(ground);
 
-    // Grid
-    const gridHelper = new THREE.GridHelper(50, 10, 0x666666, 0x888888);
+    // Tactical grid — dark green lines
+    const gridHelper = new THREE.GridHelper(120, 24, 0x3a5a3a, 0x2a4a2a);
+    gridHelper.position.y = 0.05;
     this.scene.add(gridHelper);
 
-    // Create both antennas
-    this.antennaA = this.createAntennaModel(0x4488ff, { x: -10, y: 0, z: 0 }, 'Node A');
-    this.antennaB = this.createAntennaModel(0xff8844, { x: 10, y: 0, z: 0 }, 'Node B');
+    // Create both antennas — positioned along Z-axis, will be updated dynamically
+    this.antennaA = this.createAntennaModel(0x4488ff, { x: 0, y: 0, z: 15 }, 'ALPHA');
+    this.antennaB = this.createAntennaModel(0xff8844, { x: 0, y: 0, z: -15 }, 'BRAVO');
     this.scene.add(this.antennaA);
     this.scene.add(this.antennaB);
+
+    // Create terrain mounds (initially flat, updated with elevation data)
+    this.terrainA = this.createTerrainMound(0x3d4f3d);
+    this.terrainA.position.set(0, 0, 15);
+    this.scene.add(this.terrainA);
+
+    this.terrainB = this.createTerrainMound(0x3d4f3d);
+    this.terrainB.position.set(0, 0, -15);
+    this.scene.add(this.terrainB);
+
+    // Distance label (updated dynamically)
+    this.distanceLabel = this.createTextSprite('--', '#6aaa6a');
+    this.distanceLabel.position.set(0, 1, 0);
+    this.distanceLabel.scale.set(6, 1.5, 1);
+    this.scene.add(this.distanceLabel);
+  }
+
+  createTerrainMound(color) {
+    const group = new THREE.Group();
+    // Cone-shaped hill
+    const moundGeometry = new THREE.ConeGeometry(4, 1, 12);
+    const moundMaterial = new THREE.MeshLambertMaterial({ color: color });
+    const mound = new THREE.Mesh(moundGeometry, moundMaterial);
+    mound.position.y = 0.5;
+    mound.name = 'mound';
+    group.add(mound);
+    return group;
+  }
+
+  createTextSprite(text, color) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 256;
+    canvas.height = 64;
+    ctx.fillStyle = color;
+    ctx.font = 'Bold 24px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(text, 128, 40);
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(material);
+    sprite.name = 'textSprite';
+    return sprite;
+  }
+
+  rxToColor(rx) {
+    if (rx >= -90) return new THREE.Color(0x00ff44);      // Excellent — bright green
+    if (rx >= -94) return new THREE.Color(0x88cc00);      // Good — yellow-green
+    if (rx >= -98) return new THREE.Color(0xddaa00);      // Fair — amber
+    if (rx >= -105) return new THREE.Color(0xff4400);     // Poor — orange-red
+    return new THREE.Color(0x880000);                      // Critical — dark red
+  }
+
+  updateGMLayout(data) {
+    if (!this.antennaA || !this.antennaB) return;
+
+    const elevA = data.myElevation || 10;
+    const elevB = data.otherElevation || 10;
+    const distKm = data.distance_km || 5;
+
+    // Scale: 1 unit = ~0.5m elevation, separation scaled by distance
+    const elevScale = 0.15;
+    const separation = Math.min(40, Math.max(15, distKm * 4));
+    const yA = elevA * elevScale;
+    const yB = elevB * elevScale;
+
+    // Position antennas along Z-axis
+    this.antennaA.position.set(0, yA, separation / 2);
+    this.antennaB.position.set(0, yB, -separation / 2);
+
+    // Update terrain mounds
+    if (this.terrainA) {
+      this.terrainA.position.set(0, 0, separation / 2);
+      const moundA = this.terrainA.getObjectByName('mound');
+      if (moundA) {
+        moundA.scale.y = Math.max(1, yA);
+        moundA.position.y = (Math.max(1, yA)) / 2;
+      }
+    }
+    if (this.terrainB) {
+      this.terrainB.position.set(0, 0, -separation / 2);
+      const moundB = this.terrainB.getObjectByName('mound');
+      if (moundB) {
+        moundB.scale.y = Math.max(1, yB);
+        moundB.position.y = (Math.max(1, yB)) / 2;
+      }
+    }
+
+    // Update distance label
+    if (this.distanceLabel) {
+      this.distanceLabel.position.set(0, Math.max(yA, yB) + 3, 0);
+      // Recreate label text
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 256;
+      canvas.height = 64;
+      ctx.fillStyle = '#6aaa6a';
+      ctx.font = 'Bold 22px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(distKm.toFixed(1) + ' km', 128, 40);
+      this.distanceLabel.material.map = new THREE.CanvasTexture(canvas);
+      this.distanceLabel.material.map.needsUpdate = true;
+    }
+
+    // Update orbit controls target to center between antennas
+    if (this.controls) {
+      const cy = (yA + yB) / 2 + 3;
+      this.controls.target.set(0, cy, 0);
+    }
+  }
+
+  updateSignalBeams(data) {
+    const rxA = data.myRx || -120;
+    const rxB = data.otherRx || -120;
+    const elevScale = 0.15;
+    const elevA = (data.myElevation || 10) * elevScale;
+    const elevB = (data.otherElevation || 10) * elevScale;
+    const distKm = data.distance_km || 5;
+    const separation = Math.min(40, Math.max(15, distKm * 4));
+
+    // Get antenna element heights for beam endpoints
+    const mastA = 2.0 + ((data.myMast || 1) - 1) * 1.67;
+    const mastB = 2.0 + ((data.otherMast || 1) - 1) * 1.67;
+    const hornA = new THREE.Vector3(0, elevA + 2 + mastA, separation / 2);
+    const hornB = new THREE.Vector3(0, elevB + 2 + mastB, -separation / 2);
+
+    // Midpoint for beam split
+    const mid = new THREE.Vector3().lerpVectors(hornA, hornB, 0.5);
+
+    // Beam A (A's RX quality) — from A toward midpoint, offset slightly in X
+    const offsetX = 0.3;
+    this._updateBeamLine('beamA',
+      new THREE.Vector3(hornA.x - offsetX, hornA.y, hornA.z),
+      new THREE.Vector3(mid.x - offsetX, mid.y, mid.z),
+      this.rxToColor(rxA)
+    );
+
+    // Beam B (B's RX quality) — from B toward midpoint, offset in other X direction
+    this._updateBeamLine('beamB',
+      new THREE.Vector3(hornB.x + offsetX, hornB.y, hornB.z),
+      new THREE.Vector3(mid.x + offsetX, mid.y, mid.z),
+      this.rxToColor(rxB)
+    );
+  }
+
+  _updateBeamLine(propName, start, end, color) {
+    if (this[propName]) {
+      // Update existing beam
+      const positions = this[propName].geometry.attributes.position.array;
+      positions[0] = start.x; positions[1] = start.y; positions[2] = start.z;
+      positions[3] = end.x;   positions[4] = end.y;   positions[5] = end.z;
+      this[propName].geometry.attributes.position.needsUpdate = true;
+      this[propName].material.color.copy(color);
+    } else {
+      // Create new beam
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array([
+        start.x, start.y, start.z,
+        end.x, end.y, end.z
+      ]);
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.LineBasicMaterial({
+        color: color,
+        linewidth: 2
+      });
+      this[propName] = new THREE.Line(geometry, material);
+      this.scene.add(this[propName]);
+    }
   }
 
   createAntennaModel(color, position, label) {
@@ -343,31 +551,99 @@ class Antenna3DVisualization {
     mast.name = 'mast';
     group.add(mast);
 
-    // Antenna element group
+    // Antenna element group — parabolic grid dish
     const antennaElement = new THREE.Group();
     antennaElement.name = 'element';
 
-    // Dish
-    const dishGeometry = this.getSharedGeometry('circle', 1.2, 24);
-    const dishMaterial = new THREE.MeshLambertMaterial({ color: 0x333333, side: THREE.DoubleSide });
-    const dish = new THREE.Mesh(dishGeometry, dishMaterial);
-    antennaElement.add(dish);
+    // Build parabolic dish wireframe grid
+    const dishRadius = 1.2;
+    const focalLength = 0.8;
+    const radialSegs = 12;
+    const ringSegs = 6;
+    const gridPositions = [];
 
-    // Ring
-    const ringGeometry = this.getSharedGeometry('ring', 1.0, 1.2, 24);
-    const ringMaterial = new THREE.MeshLambertMaterial({ color: color, side: THREE.DoubleSide });
-    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-    ring.position.z = 0.01;
-    antennaElement.add(ring);
+    // Generate grid vertices on paraboloid: z = -(r² / (4*f))
+    // Dish opens toward +Z (forward), concave side faces +Z
+    const ringPoints = []; // [ring][seg] = Vector3
+    for (let i = 0; i <= ringSegs; i++) {
+      const r = (i / ringSegs) * dishRadius;
+      const z = -(r * r) / (4 * focalLength);
+      const pts = [];
+      for (let j = 0; j <= radialSegs; j++) {
+        const angle = (j / radialSegs) * Math.PI * 2;
+        pts.push(new THREE.Vector3(
+          Math.cos(angle) * r,
+          Math.sin(angle) * r,
+          z
+        ));
+      }
+      ringPoints.push(pts);
+    }
 
-    // Direction cone - points forward (positive Z) to show aiming direction
-    const coneGeometry = this.getSharedGeometry('cone', 0.4, 1.5, 12);
-    const coneMaterial = new THREE.MeshLambertMaterial({ color: color });
-    const cone = new THREE.Mesh(coneGeometry, coneMaterial);
-    // Point forward (positive Z) so it aims toward the other antenna
-    cone.rotation.x = -Math.PI / 2;
-    cone.position.z = 0.8;
-    antennaElement.add(cone);
+    // Concentric ring lines
+    for (let i = 1; i <= ringSegs; i++) {
+      for (let j = 0; j < radialSegs; j++) {
+        const a = ringPoints[i][j];
+        const b = ringPoints[i][j + 1];
+        gridPositions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+      }
+    }
+
+    // Radial spoke lines
+    for (let j = 0; j < radialSegs; j++) {
+      for (let i = 0; i < ringSegs; i++) {
+        const a = ringPoints[i][j];
+        const b = ringPoints[i + 1][j];
+        gridPositions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+      }
+    }
+
+    const gridGeometry = new THREE.BufferGeometry();
+    gridGeometry.setAttribute('position', new THREE.Float32BufferAttribute(gridPositions, 3));
+    const gridMaterial = new THREE.LineBasicMaterial({ color: color });
+    const gridMesh = new THREE.LineSegments(gridGeometry, gridMaterial);
+    antennaElement.add(gridMesh);
+
+    // Dish rim ring (solid for visibility)
+    const rimGeometry = new THREE.RingGeometry(dishRadius - 0.05, dishRadius + 0.05, radialSegs);
+    const rimMaterial = new THREE.MeshLambertMaterial({ color: color, side: THREE.DoubleSide });
+    const rim = new THREE.Mesh(rimGeometry, rimMaterial);
+    const rimZ = -(dishRadius * dishRadius) / (4 * focalLength);
+    rim.position.z = rimZ;
+    antennaElement.add(rim);
+
+    // Feed horn at focal point
+    const hornGeometry = new THREE.CylinderGeometry(0.1, 0.15, 0.3, 8);
+    const hornMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+    const horn = new THREE.Mesh(hornGeometry, hornMaterial);
+    horn.rotation.x = Math.PI / 2; // Align along Z axis
+    horn.position.z = focalLength;
+    antennaElement.add(horn);
+
+    // Support struts from dish rim to feed horn
+    const strutPositions = [];
+    const numStruts = 4;
+    for (let i = 0; i < numStruts; i++) {
+      const angle = (i / numStruts) * Math.PI * 2;
+      const rx = Math.cos(angle) * dishRadius * 0.85;
+      const ry = Math.sin(angle) * dishRadius * 0.85;
+      const rr = dishRadius * 0.85;
+      const rz = -(rr * rr) / (4 * focalLength);
+      strutPositions.push(rx, ry, rz, 0, 0, focalLength);
+    }
+    const strutGeometry = new THREE.BufferGeometry();
+    strutGeometry.setAttribute('position', new THREE.Float32BufferAttribute(strutPositions, 3));
+    const strutMaterial = new THREE.LineBasicMaterial({ color: 0x999999 });
+    const struts = new THREE.LineSegments(strutGeometry, strutMaterial);
+    antennaElement.add(struts);
+
+    // Mounting arm (short cylinder from dish back to mast attachment)
+    const armGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 6);
+    const armMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
+    const arm = new THREE.Mesh(armGeometry, armMaterial);
+    arm.rotation.x = Math.PI / 2;
+    arm.position.z = -0.3;
+    antennaElement.add(arm);
 
     antennaElement.position.y = 4;
     group.add(antennaElement);
@@ -410,8 +686,9 @@ class Antenna3DVisualization {
     const element = antennaGroup.getObjectByName('element');
     if (element) {
       element.position.y = 2 + mastHeight;
-      // Fix: Invert rotation so 0 ticks (North) points to -Z (North in Three.js)
-      // Three.js rotation is CCW from +Z, but compass is CW from North (-Z)
+      // YXZ order: apply azimuth (Y) first, then tilt (X) in the rotated frame
+      // so tilt always goes up/down regardless of azimuth direction
+      element.rotation.order = 'YXZ';
       element.rotation.y = Math.PI - azimuthRad;
       element.rotation.x = tiltRad;
     }
@@ -433,16 +710,23 @@ class Antenna3DVisualization {
         this.updateOtherAntennaPosition(data.otherAz, data.otherTilt, data.otherMast);
       }
     } else {
-      // GM mode: Just use the absolute azimuth values directly
-      // The updateAntenna function will handle the rotation correctly
-      console.log('[3D Debug] GM Update - A:', data.myAz, 'B:', data.otherAz);
-      
+      // GM mode: update antenna rotations + layout + signal beams
       if (data.myNode === "A") {
         this.updateAntenna(this.antennaA, data.myAz, data.myTilt, data.myMast);
         this.updateAntenna(this.antennaB, data.otherAz, data.otherTilt, data.otherMast);
       } else {
         this.updateAntenna(this.antennaA, data.otherAz, data.otherTilt, data.otherMast);
         this.updateAntenna(this.antennaB, data.myAz, data.myTilt, data.myMast);
+      }
+
+      // Update terrain elevation and positioning
+      if (data.myElevation !== undefined) {
+        this.updateGMLayout(data);
+      }
+
+      // Update signal beams
+      if (data.myRx !== undefined) {
+        this.updateSignalBeams(data);
       }
     }
   }
@@ -472,6 +756,8 @@ class Antenna3DVisualization {
 
     this.animationId = requestAnimationFrame(() => this.animate());
 
+    if (this.controls) this.controls.update();
+
     if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
@@ -483,6 +769,9 @@ class Antenna3DVisualization {
       cancelAnimationFrame(this.animationId);
       this.animationId = null;
     }
+
+    // Dispose orbit controls
+    if (this.controls) this.controls.dispose();
 
     // Remove event listeners
     window.removeEventListener('resize', this.resizeHandler);

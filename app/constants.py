@@ -14,15 +14,11 @@ MIN_SECTIONS = 1  # Slider starts from 1, not 0
 TILT_RANGE_DEG = 15.0  # ±15° mobility range
 
 # ---------- RF Model Constants ----------
-# RX Level: 80-108 dB range (lower = better signal, higher = worse)
-# Signal quality thresholds (for UI color coding):
-#   80-81 dB = Green (perfect alignment)
-#   82-86 dB = Green (very good)
-#   87-93 dB = Orange (acceptable)
-#   94-108 dB = Red (poor/bad)
-RX_BEST_DB = 80.0       # Best possible signal (perfect alignment)
-RX_WORST_DB = 108.0     # Worst possible signal (completely misaligned)
-RX_GREEN_THRESHOLD = 86.0   # Below this = green
-RX_ORANGE_THRESHOLD = 93.0  # Below this = orange, above = red
-AZIMUTH_TOL_DEG = 5.0   # hidden "good enough" window
-TILT_TOL_DEG = 3.0      # hidden "good enough" window for tilt
+# RX levels in dBm (negative; closer to 0 = stronger)
+#   -85 to -90 dBm = Excellent
+#   -91 to -94 dBm = Good
+#   -95 to -98 dBm = Fair
+#   -99 to -105 dBm = Poor
+#   worse than -105 = Critical
+RX_BEST_DB = -85.0
+HEIGHT_BONUS_PER_SECTION = 0.15  # dB per extra mast section (above 1)

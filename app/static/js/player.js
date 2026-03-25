@@ -20,15 +20,15 @@ let lastAppliedMast = 1;
 const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
 
 function pct(rx) {
-  const lo = -120, hi = -70;
+  const lo = -120, hi = -80;
   return Math.max(0, Math.min(100, (rx - lo) / (hi - lo) * 100));
 }
 
 function getQualityBadge(rx) {
-  if (rx >= -80) return { text: 'Excellent', class: 'badge-success' };
-  if (rx >= -90) return { text: 'Good', class: 'badge-success' };
-  if (rx >= -95) return { text: 'Fair', class: 'badge-warning' };
-  if (rx >= -103) return { text: 'Poor', class: 'badge-warning' };
+  if (rx >= -90) return { text: 'Excellent', class: 'badge-success' };
+  if (rx >= -94) return { text: 'Good', class: 'badge-success' };
+  if (rx >= -98) return { text: 'Fair', class: 'badge-warning' };
+  if (rx >= -105) return { text: 'Poor', class: 'badge-warning' };
   return { text: 'Critical', class: 'badge-error' };
 }
 

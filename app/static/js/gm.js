@@ -3,9 +3,8 @@
 const E = id => document.getElementById(id);
 
 function cls(rx) {
-  if (rx >= -90 && rx <= -80) return 'success';
-  if (rx >= -95 && rx < -90) return 'warning';
-  if (rx >= -105 && rx < -95) return 'warning';
+  if (rx >= -94) return 'success';
+  if (rx >= -105) return 'warning';
   return 'error';
 }
 
@@ -255,7 +254,12 @@ async function poll() {
           myMast: j.A.mast_sections,
           otherAz: j.B.az_ticks,
           otherTilt: j.B.tilt_deg,
-          otherMast: j.B.mast_sections
+          otherMast: j.B.mast_sections,
+          myElevation: j.A.antenna_elevation_m,
+          otherElevation: j.B.antenna_elevation_m,
+          myRx: j.A.rx_level_dBm,
+          otherRx: j.B.rx_level_dBm,
+          distance_km: j.distance_km
         });
       } catch (error) {
         console.error('Error updating GM 3D visualization:', error);
