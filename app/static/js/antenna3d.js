@@ -477,48 +477,47 @@ class Antenna3DVisualization {
   updateSignalBeams(data) {
     const rxA = data.myRx || -120;
     const rxB = data.otherRx || -120;
-    const elevScale = 0.15;
-    const elevA = (data.myElevation || 10) * elevScale;
-    const elevB = (data.otherElevation || 10) * elevScale;
     const distKm = data.distance_km || 5;
     const separation = Math.min(40, Math.max(15, distKm * 4));
     const beamLength = separation * 1.2;
 
-    // Antenna element positions (world space)
-    const mastA = 2.0 + ((data.myMast || 1) - 1) * 1.67;
-    const mastB = 2.0 + ((data.otherMast || 1) - 1) * 1.67;
-    const hornA = new THREE.Vector3(0, elevA + 2 + mastA, separation / 2);
-    const hornB = new THREE.Vector3(0, elevB + 2 + mastB, -separation / 2);
+    // Get actual dish facing direction from the scene graph (guaranteed to match visual)
+    const dirA = this._getDishForward(this.antennaA);
+    const dirB = this._getDishForward(this.antennaB);
+    const startA = this._getDishOrigin(this.antennaA);
+    const startB = this._getDishOrigin(this.antennaB);
 
-    // Get aiming azimuth/tilt for each node
-    const azA = data.myNode === 'A' ? data.myAz : data.otherAz;
-    const tiltA = data.myNode === 'A' ? data.myTilt : data.otherTilt;
-    const azB = data.myNode === 'A' ? data.otherAz : data.myAz;
-    const tiltB = data.myNode === 'A' ? data.otherTilt : data.myTilt;
+    if (dirA && startA) {
+      const endA = startA.clone().add(dirA.clone().multiplyScalar(beamLength));
+      this._updateBeamLine('beamA', startA, endA, this.rxToColor(rxA));
+    }
 
-    // Calculate aiming direction from azimuth/tilt
-    // Azimuth: 0=North(-Z), 1800=East(+X), 3600=South(+Z), 5400=West(-X)
-    const dirA = this._aimDirection(azA, tiltA);
-    const dirB = this._aimDirection(azB, tiltB);
-
-    // Beam A: from A's feed horn in A's aiming direction
-    const endA = hornA.clone().add(dirA.multiplyScalar(beamLength));
-    this._updateBeamLine('beamA', hornA, endA, this.rxToColor(rxA));
-
-    // Beam B: from B's feed horn in B's aiming direction
-    const endB = hornB.clone().add(dirB.multiplyScalar(beamLength));
-    this._updateBeamLine('beamB', hornB, endB, this.rxToColor(rxB));
+    if (dirB && startB) {
+      const endB = startB.clone().add(dirB.clone().multiplyScalar(beamLength));
+      this._updateBeamLine('beamB', startB, endB, this.rxToColor(rxB));
+    }
   }
 
-  _aimDirection(azTicks, tiltDeg) {
-    const azRad = (azTicks / 7200) * Math.PI * 2;
-    const tiltRad = (tiltDeg * Math.PI) / 180;
-    // Compass to Three.js: North=-Z, East=+X
-    return new THREE.Vector3(
-      Math.sin(azRad) * Math.cos(tiltRad),
-      Math.sin(tiltRad),
-      -Math.cos(azRad) * Math.cos(tiltRad)
-    );
+  _getDishForward(antennaGroup) {
+    if (!antennaGroup) return null;
+    const element = antennaGroup.getObjectByName('element');
+    if (!element) return null;
+    // Get the world-space direction of the dish's local +Z (front/concave side)
+    element.updateWorldMatrix(true, false);
+    const forward = new THREE.Vector3(0, 0, 1);
+    forward.applyQuaternion(element.getWorldQuaternion(new THREE.Quaternion()));
+    return forward.normalize();
+  }
+
+  _getDishOrigin(antennaGroup) {
+    if (!antennaGroup) return null;
+    const element = antennaGroup.getObjectByName('element');
+    if (!element) return null;
+    // Get world position of the antenna element (where the feed horn is)
+    element.updateWorldMatrix(true, false);
+    const pos = new THREE.Vector3();
+    element.getWorldPosition(pos);
+    return pos;
   }
 
   _updateBeamLine(propName, start, end, color) {

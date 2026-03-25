@@ -167,59 +167,67 @@ async function poll() {
     const live = E('live');
     if (j.A && j.B) {
       live.innerHTML = `
-        <div class="live-telemetry">
-          <div class="telemetry-card">
-            <div class="telemetry-label">Node A RX</div>
-            <div class="telemetry-value ${cls(j.A.rx_level_dBm)}">${j.A.rx_level_dBm} dBm</div>
-          </div>
-          <div class="telemetry-card">
-            <div class="telemetry-label">Node A Mast</div>
-            <div class="telemetry-value">${j.A.mast_sections}</div>
-          </div>
-          <div class="telemetry-card">
-            <div class="telemetry-label">Node A Azimuth</div>
-            <div class="telemetry-value">${j.A.az_ticks}</div>
-          </div>
-          <div class="telemetry-card">
-            <div class="telemetry-label">Node A Tilt</div>
-            <div class="telemetry-value">${j.A.tilt_deg}°</div>
-          </div>
-          <div class="telemetry-card">
-            <div class="telemetry-label">Node B RX</div>
-            <div class="telemetry-value ${cls(j.B.rx_level_dBm)}">${j.B.rx_level_dBm} dBm</div>
-          </div>
-          <div class="telemetry-card">
-            <div class="telemetry-label">Node B Mast</div>
-            <div class="telemetry-value">${j.B.mast_sections}</div>
-          </div>
-          <div class="telemetry-card">
-            <div class="telemetry-label">Node B Azimuth</div>
-            <div class="telemetry-value">${j.B.az_ticks}</div>
-          </div>
-          <div class="telemetry-card">
-            <div class="telemetry-label">Node B Tilt</div>
-            <div class="telemetry-value">${j.B.tilt_deg}°</div>
+        <div style="margin-bottom: var(--space-3);">
+          <div style="font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; color: #4488ff; margin-bottom: var(--space-2);">ALPHA (Node A)</div>
+          <div class="live-telemetry">
+            <div class="telemetry-card">
+              <div class="telemetry-label">RX Level</div>
+              <div class="telemetry-value ${cls(j.A.rx_level_dBm)}">${j.A.rx_level_dBm} dBm</div>
+            </div>
+            <div class="telemetry-card">
+              <div class="telemetry-label">Mast</div>
+              <div class="telemetry-value">${j.A.mast_sections}</div>
+            </div>
+            <div class="telemetry-card">
+              <div class="telemetry-label">Azimuth</div>
+              <div class="telemetry-value">${j.A.az_ticks}</div>
+            </div>
+            <div class="telemetry-card">
+              <div class="telemetry-label">Tilt</div>
+              <div class="telemetry-value">${j.A.tilt_deg}°</div>
+            </div>
           </div>
         </div>
-        <div style="margin-top: var(--space-4); padding: var(--space-3); background: var(--color-gray-50); border-radius: var(--radius-md); font-size: 0.875rem; color: var(--text-secondary);">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
-            <div>
-              <strong style="color: var(--color-primary-700);">Node A Details:</strong><br/>
-              TX: ${j.A.tx} MHz | RX: ${j.A.rx} MHz<br/>
-              IP: ${j.A.ip} | Call: ${j.A.call_id}<br/>
-              Ideal: Az ${j.A.ideal_azimuth_ticks} (${j.A.ideal_azimuth_deg}°) | Tilt ${j.A.ideal_tilt_deg}°<br/>
-              Antenna Elev: ${j.A.antenna_elevation_m}m
+        <div style="margin-bottom: var(--space-3);">
+          <div style="font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; color: #ff8844; margin-bottom: var(--space-2);">BRAVO (Node B)</div>
+          <div class="live-telemetry">
+            <div class="telemetry-card">
+              <div class="telemetry-label">RX Level</div>
+              <div class="telemetry-value ${cls(j.B.rx_level_dBm)}">${j.B.rx_level_dBm} dBm</div>
             </div>
-            <div>
-              <strong style="color: var(--color-primary-700);">Node B Details:</strong><br/>
-              TX: ${j.B.tx} MHz | RX: ${j.B.rx} MHz<br/>
-              IP: ${j.B.ip} | Call: ${j.B.call_id}<br/>
-              Ideal: Az ${j.B.ideal_azimuth_ticks} (${j.B.ideal_azimuth_deg}°) | Tilt ${j.B.ideal_tilt_deg}°<br/>
-              Antenna Elev: ${j.B.antenna_elevation_m}m
+            <div class="telemetry-card">
+              <div class="telemetry-label">Mast</div>
+              <div class="telemetry-value">${j.B.mast_sections}</div>
+            </div>
+            <div class="telemetry-card">
+              <div class="telemetry-label">Azimuth</div>
+              <div class="telemetry-value">${j.B.az_ticks}</div>
+            </div>
+            <div class="telemetry-card">
+              <div class="telemetry-label">Tilt</div>
+              <div class="telemetry-value">${j.B.tilt_deg}°</div>
             </div>
           </div>
-          <div style="margin-top: var(--space-3); text-align: center; font-weight: 600;">
-            Distance: ${j.distance_km} km
+        </div>
+        <div style="padding: var(--space-3); background: #0d1117; border: 1px solid #30363d; border-radius: var(--radius-md); font-size: 0.8rem; font-family: 'Courier New', monospace;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+            <div>
+              <strong style="color: #4488ff;">ALPHA DETAILS</strong><br/>
+              <span style="color: #8b949e;">TX: ${j.A.tx} MHz | RX: ${j.A.rx} MHz</span><br/>
+              <span style="color: #8b949e;">IP: ${j.A.ip} | Call: ${j.A.call_id}</span><br/>
+              <span style="color: #3fb950;">Ideal: Az ${j.A.ideal_azimuth_ticks} (${j.A.ideal_azimuth_deg}°) | Tilt ${j.A.ideal_tilt_deg}°</span><br/>
+              <span style="color: #8b949e;">Elev: ${j.A.antenna_elevation_m}m</span>
+            </div>
+            <div>
+              <strong style="color: #ff8844;">BRAVO DETAILS</strong><br/>
+              <span style="color: #8b949e;">TX: ${j.B.tx} MHz | RX: ${j.B.rx} MHz</span><br/>
+              <span style="color: #8b949e;">IP: ${j.B.ip} | Call: ${j.B.call_id}</span><br/>
+              <span style="color: #3fb950;">Ideal: Az ${j.B.ideal_azimuth_ticks} (${j.B.ideal_azimuth_deg}°) | Tilt ${j.B.ideal_tilt_deg}°</span><br/>
+              <span style="color: #8b949e;">Elev: ${j.B.antenna_elevation_m}m</span>
+            </div>
+          </div>
+          <div style="margin-top: var(--space-3); text-align: center; color: #6aaa6a; font-weight: 600;">
+            DISTANCE: ${j.distance_km} km
           </div>
         </div>
       `;
