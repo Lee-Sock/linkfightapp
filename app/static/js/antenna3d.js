@@ -502,10 +502,11 @@ class Antenna3DVisualization {
     if (!antennaGroup) return null;
     const element = antennaGroup.getObjectByName('element');
     if (!element) return null;
-    // Get the world-space direction of the dish's local +Z (front/concave side)
     element.updateWorldMatrix(true, false);
-    const forward = new THREE.Vector3(0, 0, 1);
-    forward.applyQuaternion(element.getWorldQuaternion(new THREE.Quaternion()));
+    const quat = element.getWorldQuaternion(new THREE.Quaternion());
+    // Local -Z is the direction the concave dish opening faces (toward feed horn side)
+    const forward = new THREE.Vector3(0, 0, -1);
+    forward.applyQuaternion(quat);
     return forward.normalize();
   }
 
@@ -513,10 +514,14 @@ class Antenna3DVisualization {
     if (!antennaGroup) return null;
     const element = antennaGroup.getObjectByName('element');
     if (!element) return null;
-    // Get world position of the antenna element (where the feed horn is)
     element.updateWorldMatrix(true, false);
     const pos = new THREE.Vector3();
     element.getWorldPosition(pos);
+    // Offset to feed horn position (0.8 units forward from element center)
+    const forward = this._getDishForward(antennaGroup);
+    if (forward) {
+      pos.add(forward.multiplyScalar(0.8));
+    }
     return pos;
   }
 
