@@ -485,16 +485,15 @@ class Antenna3DVisualization {
     const separation = Math.min(40, Math.max(15, distKm * 4));
     const beamLength = separation * 1.5;
 
-    // Each beam shoots from the dish's concave (front) side
-    // B needs flip because its bearing offset removes the PI rotation
-    const beamA = this._getDishBeam(this.antennaA, beamLength, false);
-    const beamB = this._getDishBeam(this.antennaB, beamLength, true);
+    // Each beam shoots from the dish's concave side (-Z in local element space)
+    const beamA = this._getDishBeam(this.antennaA, beamLength);
+    const beamB = this._getDishBeam(this.antennaB, beamLength);
 
     if (beamA) this._updateBeamLine('beamA', beamA.start, beamA.end, this.rxToColor(rxA));
     if (beamB) this._updateBeamLine('beamB', beamB.start, beamB.end, this.rxToColor(rxB));
   }
 
-  _getDishBeam(antennaGroup, length, flipForward = false) {
+  _getDishBeam(antennaGroup, length) {
     if (!antennaGroup) return null;
     const element = antennaGroup.getObjectByName('element');
     if (!element) return null;
@@ -503,8 +502,8 @@ class Antenna3DVisualization {
     const pos = new THREE.Vector3();
     element.getWorldPosition(pos);
 
-    // Get the dish's forward direction in world space
-    const forward = new THREE.Vector3(0, 0, flipForward ? -1 : 1);
+    // Concave side faces -Z in local element space
+    const forward = new THREE.Vector3(0, 0, -1);
     forward.applyQuaternion(element.getWorldQuaternion(new THREE.Quaternion()));
     forward.normalize();
 
@@ -725,16 +724,19 @@ class Antenna3DVisualization {
       // make antennas visually face each other in the scene
       const idealAzA = data.idealAzA || 0;
       const idealAzB = data.idealAzB || 0;
-      const offsetA = idealAzA;            // A at +Z, needs to face -Z when correct
-      const offsetB = idealAzB - 3600;     // B at -Z, needs to face +Z when correct
+      // Dish concave faces -Z in local space, so:
+      // A (at +Z) needs total Y=0 for concave to face -Z toward B
+      // B (at -Z) needs total Y=PI for concave to face +Z toward A
+      const offsetA = idealAzA - 3600;
+      const offsetB = idealAzB;
 
-      // B's bearing offset removes the PI flip, so negate B's tilt to compensate
+      // A's offset removes the PI flip, so negate A's tilt to compensate
       if (data.myNode === "A") {
-        this.updateAntenna(this.antennaA, data.myAz, data.myTilt, data.myMast, offsetA);
-        this.updateAntenna(this.antennaB, data.otherAz, -data.otherTilt, data.otherMast, offsetB);
+        this.updateAntenna(this.antennaA, data.myAz, -data.myTilt, data.myMast, offsetA);
+        this.updateAntenna(this.antennaB, data.otherAz, data.otherTilt, data.otherMast, offsetB);
       } else {
-        this.updateAntenna(this.antennaA, data.otherAz, data.otherTilt, data.otherMast, offsetA);
-        this.updateAntenna(this.antennaB, data.myAz, -data.myTilt, data.myMast, offsetB);
+        this.updateAntenna(this.antennaA, data.otherAz, -data.otherTilt, data.otherMast, offsetA);
+        this.updateAntenna(this.antennaB, data.myAz, data.myTilt, data.myMast, offsetB);
       }
 
       // Update terrain elevation and positioning
