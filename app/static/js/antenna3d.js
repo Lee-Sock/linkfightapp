@@ -75,6 +75,10 @@ class Antenna3DVisualization {
       this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
       this.controls.enableDamping = true;
       this.controls.dampingFactor = 0.05;
+      this.controls.enablePan = true;
+      this.controls.enableZoom = true;
+      this.controls.panSpeed = 0.8;
+      this.controls.zoomSpeed = 1.2;
       this.controls.target.set(0, 5, 0);
     }
 
@@ -477,51 +481,30 @@ class Antenna3DVisualization {
   updateSignalBeams(data) {
     const rxA = data.myRx || -120;
     const rxB = data.otherRx || -120;
-    const distKm = data.distance_km || 5;
-    const separation = Math.min(40, Math.max(15, distKm * 4));
-    const beamLength = separation * 1.2;
 
-    // Get actual dish facing direction from the scene graph (guaranteed to match visual)
-    const dirA = this._getDishForward(this.antennaA);
-    const dirB = this._getDishForward(this.antennaB);
-    const startA = this._getDishOrigin(this.antennaA);
-    const startB = this._getDishOrigin(this.antennaB);
+    // Get feed horn world positions for both antennas
+    const posA = this._getElementWorldPos(this.antennaA);
+    const posB = this._getElementWorldPos(this.antennaB);
+    if (!posA || !posB) return;
 
-    if (dirA && startA) {
-      const endA = startA.clone().add(dirA.clone().multiplyScalar(beamLength));
-      this._updateBeamLine('beamA', startA, endA, this.rxToColor(rxA));
-    }
-
-    if (dirB && startB) {
-      const endB = startB.clone().add(dirB.clone().multiplyScalar(beamLength));
-      this._updateBeamLine('beamB', startB, endB, this.rxToColor(rxB));
-    }
+    // Draw straight LOS beam between the two antenna feed horns
+    // Beam A colored by A's RX (how well B transmits to A)
+    // Beam B colored by B's RX (how well A transmits to B)
+    // Offset slightly so both lines are visible
+    const offset = new THREE.Vector3(0.2, 0.1, 0);
+    this._updateBeamLine('beamA',
+      posA.clone().add(offset), posB.clone().add(offset), this.rxToColor(rxA));
+    this._updateBeamLine('beamB',
+      posB.clone().sub(offset), posA.clone().sub(offset), this.rxToColor(rxB));
   }
 
-  _getDishForward(antennaGroup) {
-    if (!antennaGroup) return null;
-    const element = antennaGroup.getObjectByName('element');
-    if (!element) return null;
-    element.updateWorldMatrix(true, false);
-    const quat = element.getWorldQuaternion(new THREE.Quaternion());
-    // Local +Z is the direction the concave dish opening faces (feed horn side)
-    const forward = new THREE.Vector3(0, 0, 1);
-    forward.applyQuaternion(quat);
-    return forward.normalize();
-  }
-
-  _getDishOrigin(antennaGroup) {
+  _getElementWorldPos(antennaGroup) {
     if (!antennaGroup) return null;
     const element = antennaGroup.getObjectByName('element');
     if (!element) return null;
     element.updateWorldMatrix(true, false);
     const pos = new THREE.Vector3();
     element.getWorldPosition(pos);
-    // Offset to feed horn position (0.8 units forward from element center)
-    const forward = this._getDishForward(antennaGroup);
-    if (forward) {
-      pos.add(forward.multiplyScalar(0.8));
-    }
     return pos;
   }
 

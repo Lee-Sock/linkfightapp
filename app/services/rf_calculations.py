@@ -81,17 +81,15 @@ def compute_one_way_rx(sess, tx, rx):
     if not hasattr(sess, "distance_km") or sess.distance_km <= 0:
         raise ValueError("Invalid session distance")
 
-    # Bearings — both directions for bidirectional alignment
+    # Bearing from transmitter to receiver
     try:
         brg_tx_to_rx = bearing_deg(tx.lat, tx.lon, rx.lat, rx.lon)
-        brg_rx_to_tx = bearing_deg(rx.lat, rx.lon, tx.lat, tx.lon)
     except (TypeError, ValueError) as e:
         raise ValueError(f"Invalid coordinates: {e}")
 
-    # TX azimuth error (is the transmitter pointing at the receiver?)
+    # TX azimuth error — is the transmitter pointing at the receiver?
+    # RX's alignment doesn't matter here; RX's own signal depends on TX's aim
     az_err_tx = abs(deg_wrap180(ticks_to_deg(tx.az_ticks) - brg_tx_to_rx))
-    # RX azimuth error (is the receiver pointing at the transmitter?)
-    az_err_rx = abs(deg_wrap180(ticks_to_deg(rx.az_ticks) - brg_rx_to_tx))
 
     # Use session distance
     D = sess.distance_km
@@ -104,18 +102,17 @@ def compute_one_way_rx(sess, tx, rx):
     if tx_h <= 0 or rx_h <= 0:
         raise ValueError("Antenna heights must be positive")
 
-    # Ideal tilt — gameplay-scaled, different for each side
+    # Ideal tilt for TX side (what tilt does the transmitter need to aim at the receiver?)
     height_diff_m = rx_h - tx_h
     distance_m = max(1.0, D * 1000.0)
     raw_tilt = (height_diff_m / distance_m) * TILT_AMPLIFICATION
     ideal_tilt_tx = max(-TILT_RANGE_DEG, min(TILT_RANGE_DEG, raw_tilt))
     ideal_tilt_rx = max(-TILT_RANGE_DEG, min(TILT_RANGE_DEG, -raw_tilt))
     tilt_err_tx = abs(tx.tilt_deg - ideal_tilt_tx)
-    tilt_err_rx = abs(rx.tilt_deg - ideal_tilt_rx)
 
-    # Bidirectional losses — TX alignment weighted more (beam direction matters most)
-    loss_az = 0.6 * azimuth_loss_db(az_err_tx) + 0.4 * azimuth_loss_db(az_err_rx)
-    loss_tilt = 0.6 * tilt_loss_db(tilt_err_tx) + 0.4 * tilt_loss_db(tilt_err_rx)
+    # One-sided losses — only the transmitter's alignment affects the receiver's signal
+    loss_az = azimuth_loss_db(az_err_tx)
+    loss_tilt = tilt_loss_db(tilt_err_tx)
     bonus_h = height_bonus_db(tx.mast_sections, rx.mast_sections)
     loss_hmismatch = height_mismatch_loss_db(tx_h, rx_h)
     pen_freq = freq_penalty_db(tx.tx_mhz, rx.rx_mhz)
@@ -139,8 +136,8 @@ def compute_one_way_rx(sess, tx, rx):
 
     # Debug logging
     print(
-        f"[RF Calc] AZ: -{loss_az:.1f} (tx:{az_err_tx:.0f}° rx:{az_err_rx:.0f}°) | "
-        f"TILT: -{loss_tilt:.1f} (tx:{tilt_err_tx:.1f}° rx:{tilt_err_rx:.1f}°) | "
+        f"[RF Calc] AZ: -{loss_az:.1f} (tx err:{az_err_tx:.0f}°) | "
+        f"TILT: -{loss_tilt:.1f} (tx err:{tilt_err_tx:.1f}°, ideal:{ideal_tilt_tx:.1f}°) | "
         f"H.MIS: -{loss_hmismatch:.1f} | H.BON: +{bonus_h:.1f} | "
         f"FREQ: -{pen_freq:.1f} | RAW: {rx_dbm:.1f} dBm"
     )
