@@ -481,31 +481,37 @@ class Antenna3DVisualization {
   updateSignalBeams(data) {
     const rxA = data.myRx || -120;
     const rxB = data.otherRx || -120;
+    const distKm = data.distance_km || 5;
+    const separation = Math.min(40, Math.max(15, distKm * 4));
+    const beamLength = separation * 1.5;
 
-    // Get feed horn world positions for both antennas
-    const posA = this._getElementWorldPos(this.antennaA);
-    const posB = this._getElementWorldPos(this.antennaB);
-    if (!posA || !posB) return;
+    // Each beam shoots from the dish in the direction it's actually facing
+    const beamA = this._getDishBeam(this.antennaA, beamLength);
+    const beamB = this._getDishBeam(this.antennaB, beamLength);
 
-    // Draw straight LOS beam between the two antenna feed horns
-    // Beam A colored by A's RX (how well B transmits to A)
-    // Beam B colored by B's RX (how well A transmits to B)
-    // Offset slightly so both lines are visible
-    const offset = new THREE.Vector3(0.2, 0.1, 0);
-    this._updateBeamLine('beamA',
-      posA.clone().add(offset), posB.clone().add(offset), this.rxToColor(rxA));
-    this._updateBeamLine('beamB',
-      posB.clone().sub(offset), posA.clone().sub(offset), this.rxToColor(rxB));
+    if (beamA) this._updateBeamLine('beamA', beamA.start, beamA.end, this.rxToColor(rxA));
+    if (beamB) this._updateBeamLine('beamB', beamB.start, beamB.end, this.rxToColor(rxB));
   }
 
-  _getElementWorldPos(antennaGroup) {
+  _getDishBeam(antennaGroup, length) {
     if (!antennaGroup) return null;
     const element = antennaGroup.getObjectByName('element');
     if (!element) return null;
+
+    // Get world position of the dish element
     element.updateWorldMatrix(true, false);
     const pos = new THREE.Vector3();
     element.getWorldPosition(pos);
-    return pos;
+
+    // Get the dish's forward direction in world space (local +Z = concave/front side)
+    const forward = new THREE.Vector3(0, 0, 1);
+    forward.applyQuaternion(element.getWorldQuaternion(new THREE.Quaternion()));
+    forward.normalize();
+
+    // Start at feed horn (offset forward by 0.8 from element center)
+    const start = pos.clone().add(forward.clone().multiplyScalar(0.8));
+    const end = start.clone().add(forward.clone().multiplyScalar(length));
+    return { start, end };
   }
 
   _updateBeamLine(propName, start, end, color) {
