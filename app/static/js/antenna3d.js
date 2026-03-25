@@ -673,9 +673,14 @@ class Antenna3DVisualization {
   updateAntenna(antennaGroup, azimuthTicks, tiltDeg, mastSections, bearingOffset = 0) {
     if (!antennaGroup) return;
 
-    const adjTicks = azimuthTicks - bearingOffset;
-    const azimuthRad = (adjTicks / 7200) * Math.PI * 2;
+    const azimuthRad = (azimuthTicks / 7200) * Math.PI * 2;
     const tiltRad = (tiltDeg * Math.PI) / 180;
+
+    // Apply bearing offset on the GROUP (parent) so it doesn't affect the tilt axis
+    if (bearingOffset !== 0) {
+      const offsetRad = (bearingOffset / 7200) * Math.PI * 2;
+      antennaGroup.rotation.y = offsetRad;
+    }
 
     const mastHeight = 2.0 + (mastSections - 1) * 1.67;
     const mast = antennaGroup.getObjectByName('mast');
@@ -688,7 +693,7 @@ class Antenna3DVisualization {
     if (element) {
       element.position.y = 2 + mastHeight;
       // YXZ order: apply azimuth (Y) first, then tilt (X) in the rotated frame
-      // so tilt always goes up/down regardless of azimuth direction
+      // Identical to player view — tilt always goes up/down correctly
       element.rotation.order = 'YXZ';
       element.rotation.y = Math.PI - azimuthRad;
       element.rotation.x = tiltRad;
