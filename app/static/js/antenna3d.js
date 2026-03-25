@@ -485,30 +485,29 @@ class Antenna3DVisualization {
     const separation = Math.min(40, Math.max(15, distKm * 4));
     const beamLength = separation * 1.5;
 
-    // Each beam shoots from the dish in the direction it's actually facing
-    const beamA = this._getDishBeam(this.antennaA, beamLength);
-    const beamB = this._getDishBeam(this.antennaB, beamLength);
+    // Each beam shoots from the dish's concave (front) side
+    // B needs flip because its bearing offset removes the PI rotation
+    const beamA = this._getDishBeam(this.antennaA, beamLength, false);
+    const beamB = this._getDishBeam(this.antennaB, beamLength, true);
 
     if (beamA) this._updateBeamLine('beamA', beamA.start, beamA.end, this.rxToColor(rxA));
     if (beamB) this._updateBeamLine('beamB', beamB.start, beamB.end, this.rxToColor(rxB));
   }
 
-  _getDishBeam(antennaGroup, length) {
+  _getDishBeam(antennaGroup, length, flipForward = false) {
     if (!antennaGroup) return null;
     const element = antennaGroup.getObjectByName('element');
     if (!element) return null;
 
-    // Get world position of the dish element
     element.updateWorldMatrix(true, false);
     const pos = new THREE.Vector3();
     element.getWorldPosition(pos);
 
-    // Get the dish's forward direction in world space (local +Z = concave/front side)
-    const forward = new THREE.Vector3(0, 0, 1);
+    // Get the dish's forward direction in world space
+    const forward = new THREE.Vector3(0, 0, flipForward ? -1 : 1);
     forward.applyQuaternion(element.getWorldQuaternion(new THREE.Quaternion()));
     forward.normalize();
 
-    // Start at feed horn (offset forward by 0.8 from element center)
     const start = pos.clone().add(forward.clone().multiplyScalar(0.8));
     const end = start.clone().add(forward.clone().multiplyScalar(length));
     return { start, end };
