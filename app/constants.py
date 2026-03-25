@@ -21,4 +21,5 @@ TILT_RANGE_DEG = 15.0  # ±15° mobility range
 #   -99 to -105 dBm = Poor
 #   worse than -105 = Critical
 RX_BEST_DB = -85.0
-HEIGHT_BONUS_PER_SECTION = 0.15  # dB per extra mast section (above 1)
+HEIGHT_BONUS_PER_SECTION = 0.5   # dB per extra mast section (above 1), max 8 dB
+TILT_AMPLIFICATION = 2000.0      # scales height_diff/distance into meaningful tilt degrees

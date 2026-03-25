@@ -5,6 +5,7 @@ import random
 from app.constants import (
     RX_BEST_DB,
     HEIGHT_BONUS_PER_SECTION,
+    TILT_AMPLIFICATION,
     TILT_RANGE_DEG,
     SECTION_H_M,
     BASE_ANTENNA_HEIGHT_M,
@@ -37,6 +38,16 @@ def height_bonus_db(sections_tx: int, sections_rx: int) -> float:
     """
     extra = max(0, sections_tx - 1) + max(0, sections_rx - 1)
     return HEIGHT_BONUS_PER_SECTION * extra
+
+
+def height_mismatch_loss_db(h_tx: float, h_rx: float) -> float:
+    """Penalty for height difference between antennas.
+
+    Higher mismatch = harder to maintain LOS. Reducible by raising the lower mast.
+    ratio=1 (same height) -> 0 dB, ratio=2 -> ~2.8 dB, ratio=5 -> ~6.4 dB
+    """
+    ratio = max(h_tx, h_rx) / max(1.0, min(h_tx, h_rx))
+    return min(8.0, 4.0 * math.log(max(1.0, ratio)))
 
 
 def freq_penalty_db(tx_mhz: float, rx_mhz: float) -> float:
@@ -91,10 +102,10 @@ def compute_one_way_rx(sess, tx, rx):
     if tx_h <= 0 or rx_h <= 0:
         raise ValueError("Antenna heights must be positive")
 
-    # Ideal tilt calculation with safe division
+    # Ideal tilt — gameplay-scaled so elevation differences create real tilt requirements
     height_diff_m = rx_h - tx_h
-    distance_m = max(1.0, D * 1000.0)  # Ensure minimum 1m to avoid division by zero
-    raw_tilt = math.degrees(math.atan2(height_diff_m, distance_m)) * 2.0
+    distance_m = max(1.0, D * 1000.0)
+    raw_tilt = (height_diff_m / distance_m) * TILT_AMPLIFICATION
     ideal_tilt = max(-TILT_RANGE_DEG, min(TILT_RANGE_DEG, raw_tilt))
     tilt_err = abs(tx.tilt_deg - ideal_tilt)
 
@@ -102,6 +113,7 @@ def compute_one_way_rx(sess, tx, rx):
     loss_az = azimuth_loss_db(az_err)
     loss_tilt = tilt_loss_db(tilt_err)
     bonus_h = height_bonus_db(tx.mast_sections, rx.mast_sections)
+    loss_hmismatch = height_mismatch_loss_db(tx_h, rx_h)
     pen_freq = freq_penalty_db(tx.tx_mhz, rx.rx_mhz)
 
     # Deterministic jitter based on session seed (not time-based for reproducibility)
@@ -116,16 +128,16 @@ def compute_one_way_rx(sess, tx, rx):
         + bonus_h
         - loss_az
         - loss_tilt
+        - loss_hmismatch
         - pen_freq
         + jitter
     )
 
     # Debug logging
     print(
-        f"[RF Calc] AZ loss: {loss_az:.2f} dB | TILT: {loss_tilt:.2f} dB | "
-        f"FREQ: {pen_freq:.2f} dB | HEIGHT: {bonus_h:.2f} dB | "
-        f"JITTER: {jitter:.2f} dB | "
-        f"BASE: {RX_BEST_DB} dBm | RAW: {rx_dbm:.2f} dBm"
+        f"[RF Calc] AZ: -{loss_az:.1f} | TILT: -{loss_tilt:.1f} (ideal {ideal_tilt:.1f}°) | "
+        f"H.MIS: -{loss_hmismatch:.1f} | H.BON: +{bonus_h:.1f} | "
+        f"FREQ: -{pen_freq:.1f} | BASE: {RX_BEST_DB} | RAW: {rx_dbm:.1f} dBm"
     )
 
     # Clamp to valid range
