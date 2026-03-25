@@ -482,29 +482,42 @@ class Antenna3DVisualization {
     const elevB = (data.otherElevation || 10) * elevScale;
     const distKm = data.distance_km || 5;
     const separation = Math.min(40, Math.max(15, distKm * 4));
+    const beamLength = separation * 1.2;
 
-    // Get antenna element heights for beam endpoints
+    // Antenna element positions (world space)
     const mastA = 2.0 + ((data.myMast || 1) - 1) * 1.67;
     const mastB = 2.0 + ((data.otherMast || 1) - 1) * 1.67;
     const hornA = new THREE.Vector3(0, elevA + 2 + mastA, separation / 2);
     const hornB = new THREE.Vector3(0, elevB + 2 + mastB, -separation / 2);
 
-    // Midpoint for beam split
-    const mid = new THREE.Vector3().lerpVectors(hornA, hornB, 0.5);
+    // Get aiming azimuth/tilt for each node
+    const azA = data.myNode === 'A' ? data.myAz : data.otherAz;
+    const tiltA = data.myNode === 'A' ? data.myTilt : data.otherTilt;
+    const azB = data.myNode === 'A' ? data.otherAz : data.myAz;
+    const tiltB = data.myNode === 'A' ? data.otherTilt : data.myTilt;
 
-    // Beam A (A's RX quality) — from A toward midpoint, offset slightly in X
-    const offsetX = 0.3;
-    this._updateBeamLine('beamA',
-      new THREE.Vector3(hornA.x - offsetX, hornA.y, hornA.z),
-      new THREE.Vector3(mid.x - offsetX, mid.y, mid.z),
-      this.rxToColor(rxA)
-    );
+    // Calculate aiming direction from azimuth/tilt
+    // Azimuth: 0=North(-Z), 1800=East(+X), 3600=South(+Z), 5400=West(-X)
+    const dirA = this._aimDirection(azA, tiltA);
+    const dirB = this._aimDirection(azB, tiltB);
 
-    // Beam B (B's RX quality) — from B toward midpoint, offset in other X direction
-    this._updateBeamLine('beamB',
-      new THREE.Vector3(hornB.x + offsetX, hornB.y, hornB.z),
-      new THREE.Vector3(mid.x + offsetX, mid.y, mid.z),
-      this.rxToColor(rxB)
+    // Beam A: from A's feed horn in A's aiming direction
+    const endA = hornA.clone().add(dirA.multiplyScalar(beamLength));
+    this._updateBeamLine('beamA', hornA, endA, this.rxToColor(rxA));
+
+    // Beam B: from B's feed horn in B's aiming direction
+    const endB = hornB.clone().add(dirB.multiplyScalar(beamLength));
+    this._updateBeamLine('beamB', hornB, endB, this.rxToColor(rxB));
+  }
+
+  _aimDirection(azTicks, tiltDeg) {
+    const azRad = (azTicks / 7200) * Math.PI * 2;
+    const tiltRad = (tiltDeg * Math.PI) / 180;
+    // Compass to Three.js: North=-Z, East=+X
+    return new THREE.Vector3(
+      Math.sin(azRad) * Math.cos(tiltRad),
+      Math.sin(tiltRad),
+      -Math.cos(azRad) * Math.cos(tiltRad)
     );
   }
 
