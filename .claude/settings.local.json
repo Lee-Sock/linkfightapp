@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(ls -la /c/Users/Brand/OneDrive/Desktop/linkfightapp/app/*.py)"
     ]
   }
 }

@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from app.models.requests import GMCreateBody
 from app.services.session_manager import create_session, update_session, get_session
 from app.services.rf_calculations import compute_one_way_rx
+from app.services.geometry import bearing_deg
 from app.utils.conversions import ticks_to_deg
 from app.utils.display import rx_color
 from app.constants import BASE_ANTENNA_HEIGHT_M, SECTION_H_M
@@ -26,8 +27,8 @@ async def simple_gm_update(sid: str, body: GMCreateBody):
 @router.get("/simple/{sid}/gm_view")
 def simple_gm_view(sid: str):
     s = get_session(sid)
-    rxA, brgBA, tiltA = compute_one_way_rx(s, s.B, s.A)  # what A receives (B→A)
-    rxB, brgAB, tiltB = compute_one_way_rx(s, s.A, s.B)  # what B receives (A→B)
+    rxA, brgBA, _, ideal_tilt_A_from_rx = compute_one_way_rx(s, s.B, s.A)  # what A receives (B→A)
+    rxB, brgAB, _, ideal_tilt_B_from_rx = compute_one_way_rx(s, s.A, s.B)  # what B receives (A→B)
 
     # Calculate antenna elevations
     ant_elev_A = (
@@ -37,16 +38,18 @@ def simple_gm_view(sid: str):
         s.B.elev_asl_m + BASE_ANTENNA_HEIGHT_M + (s.B.mast_sections - 1) * SECTION_H_M
     )
 
-    # Calculate ideal settings for GM view (thresholds)
-    # For Node A pointing at Node B
-    ideal_az_A = brgAB
+    # Ideal azimuth: bearing from each node TO the other
+    # For Node A pointing at Node B: use bearing A→B
+    ideal_az_A = bearing_deg(s.A.lat, s.A.lon, s.B.lat, s.B.lon)
     ideal_az_A_ticks = round((ideal_az_A / 360.0) * 7200) % 7200
-    ideal_tilt_A = tiltB  # Tilt needed for A to point at B
 
-    # For Node B pointing at Node A
-    ideal_az_B = brgBA
+    # For Node B pointing at Node A: use bearing B→A
+    ideal_az_B = bearing_deg(s.B.lat, s.B.lon, s.A.lat, s.A.lon)
     ideal_az_B_ticks = round((ideal_az_B / 360.0) * 7200) % 7200
-    ideal_tilt_B = tiltA  # Tilt needed for B to point at A
+
+    # Ideal tilt: from the rx side return value (what tilt does this node need?)
+    ideal_tilt_A = ideal_tilt_A_from_rx
+    ideal_tilt_B = ideal_tilt_B_from_rx
 
     return {
         "id": s.id,

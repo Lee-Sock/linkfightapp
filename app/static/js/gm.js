@@ -267,7 +267,9 @@ async function poll() {
           otherElevation: j.B.antenna_elevation_m,
           myRx: j.A.rx_level_dBm,
           otherRx: j.B.rx_level_dBm,
-          distance_km: j.distance_km
+          distance_km: j.distance_km,
+          idealAzA: j.A.ideal_azimuth_ticks,
+          idealAzB: j.B.ideal_azimuth_ticks
         });
       } catch (error) {
         console.error('Error updating GM 3D visualization:', error);

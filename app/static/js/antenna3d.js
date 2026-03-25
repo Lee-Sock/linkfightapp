@@ -687,10 +687,11 @@ class Antenna3DVisualization {
     return group;
   }
 
-  updateAntenna(antennaGroup, azimuthTicks, tiltDeg, mastSections) {
+  updateAntenna(antennaGroup, azimuthTicks, tiltDeg, mastSections, bearingOffset = 0) {
     if (!antennaGroup) return;
 
-    const azimuthRad = (azimuthTicks / 7200) * Math.PI * 2;
+    const adjTicks = azimuthTicks - bearingOffset;
+    const azimuthRad = (adjTicks / 7200) * Math.PI * 2;
     const tiltRad = (tiltDeg * Math.PI) / 180;
 
     const mastHeight = 2.0 + (mastSections - 1) * 1.67;
@@ -727,13 +728,19 @@ class Antenna3DVisualization {
         this.updateOtherAntennaPosition(data.otherAz, data.otherTilt, data.otherMast);
       }
     } else {
-      // GM mode: update antenna rotations + layout + signal beams
+      // GM mode: update antenna rotations with bearing offsets so correct azimuths
+      // make antennas visually face each other in the scene
+      const idealAzA = data.idealAzA || 0;
+      const idealAzB = data.idealAzB || 0;
+      const offsetA = idealAzA;            // A at +Z, needs to face -Z when correct
+      const offsetB = idealAzB - 3600;     // B at -Z, needs to face +Z when correct
+
       if (data.myNode === "A") {
-        this.updateAntenna(this.antennaA, data.myAz, data.myTilt, data.myMast);
-        this.updateAntenna(this.antennaB, data.otherAz, data.otherTilt, data.otherMast);
+        this.updateAntenna(this.antennaA, data.myAz, data.myTilt, data.myMast, offsetA);
+        this.updateAntenna(this.antennaB, data.otherAz, data.otherTilt, data.otherMast, offsetB);
       } else {
-        this.updateAntenna(this.antennaA, data.otherAz, data.otherTilt, data.otherMast);
-        this.updateAntenna(this.antennaB, data.myAz, data.myTilt, data.myMast);
+        this.updateAntenna(this.antennaA, data.otherAz, data.otherTilt, data.otherMast, offsetA);
+        this.updateAntenna(this.antennaB, data.myAz, data.myTilt, data.myMast, offsetB);
       }
 
       // Update terrain elevation and positioning

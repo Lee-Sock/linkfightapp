@@ -26,7 +26,7 @@ def simple_player_view(sid: str, team: Literal["A", "B"]):
     s = get_session(sid)
     me = s.A if team == "A" else s.B
     other = s.B if team == "A" else s.A
-    rx_me, _, _ = compute_one_way_rx(s, other, me)  # I receive from the other side
+    rx_me, _, _, _ = compute_one_way_rx(s, other, me)  # I receive from the other side
 
     return {
         "brief": public_brief(s, team),
