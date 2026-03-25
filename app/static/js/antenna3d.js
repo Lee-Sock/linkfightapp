@@ -427,8 +427,8 @@ class Antenna3DVisualization {
     const elevB = data.otherElevation || 10;
     const distKm = data.distance_km || 5;
 
-    // Scale: 1 unit = ~0.5m elevation, separation scaled by distance
-    const elevScale = 0.15;
+    // Scale elevation for visible height difference in 3D scene
+    const elevScale = 0.4;
     const separation = Math.min(40, Math.max(15, distKm * 4));
     const yA = elevA * elevScale;
     const yB = elevB * elevScale;
@@ -729,12 +729,13 @@ class Antenna3DVisualization {
       const offsetA = idealAzA;            // A at +Z, needs to face -Z when correct
       const offsetB = idealAzB - 3600;     // B at -Z, needs to face +Z when correct
 
+      // B's bearing offset removes the PI flip, so negate B's tilt to compensate
       if (data.myNode === "A") {
         this.updateAntenna(this.antennaA, data.myAz, data.myTilt, data.myMast, offsetA);
-        this.updateAntenna(this.antennaB, data.otherAz, data.otherTilt, data.otherMast, offsetB);
+        this.updateAntenna(this.antennaB, data.otherAz, -data.otherTilt, data.otherMast, offsetB);
       } else {
         this.updateAntenna(this.antennaA, data.otherAz, data.otherTilt, data.otherMast, offsetA);
-        this.updateAntenna(this.antennaB, data.myAz, data.myTilt, data.myMast, offsetB);
+        this.updateAntenna(this.antennaB, data.myAz, -data.myTilt, data.myMast, offsetB);
       }
 
       // Update terrain elevation and positioning
