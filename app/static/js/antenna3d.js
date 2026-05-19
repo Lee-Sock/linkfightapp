@@ -733,11 +733,20 @@ class Antenna3DVisualization {
       const offsetB = idealAzB;
 
       // A's offset removes the PI flip, so negate A's tilt to compensate
+      //if (data.myNode === "A") {
+      //  this.updateAntenna(this.antennaA, data.myAz, -data.myTilt, data.myMast, offsetA);
+      //  this.updateAntenna(this.antennaB, data.otherAz, data.otherTilt, data.otherMast, offsetB);
+      //} else {
+      //  this.updateAntenna(this.antennaA, data.otherAz, -data.otherTilt, data.otherMast, offsetA);
+      //  this.updateAntenna(this.antennaB, data.myAz, data.myTilt, data.myMast, offsetB);
+      //}
+
+      //A's tilt does not need to be compensated for
       if (data.myNode === "A") {
-        this.updateAntenna(this.antennaA, data.myAz, -data.myTilt, data.myMast, offsetA);
+        this.updateAntenna(this.antennaA, data.myAz, data.myTilt, data.myMast, offsetA);
         this.updateAntenna(this.antennaB, data.otherAz, data.otherTilt, data.otherMast, offsetB);
       } else {
-        this.updateAntenna(this.antennaA, data.otherAz, -data.otherTilt, data.otherMast, offsetA);
+        this.updateAntenna(this.antennaA, data.otherAz, data.otherTilt, data.otherMast, offsetA);
         this.updateAntenna(this.antennaB, data.myAz, data.myTilt, data.myMast, offsetB);
       }
 
