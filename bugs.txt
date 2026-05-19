@@ -1,0 +1,10 @@
+negative tilt tilts antenna down in player view
+node b negative tile tilts antenna down in gm view
+node a negative tilt tilts antenna up in gm view
+this show the wrong information to the gm on the actual 
+tilt of the antenna that the players set, fore example is the player has set and ideal 
+tilt of -8 degress pointing downwards the visualization will shwo the antenna pointing
+up (Fixed)
+
+
+at high enough heights the atenna visualization cuts off in gm view
