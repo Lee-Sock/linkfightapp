@@ -68,13 +68,10 @@ function syncNode2FromNode1() {
     E('B_cid').value = String(info.last1);
   }
 
+  
   const aAz = Number(E('A_az').value);
-  if (!Number.isNaN(aAz) && aAz >= 0 && aAz <= 7200) {
-    const bAz = (aAz + 3600) % 7200;
-    E('B_az').value = Math.round(bAz);
-  } else {
-    E('B_az').value = '';
-  }
+  const bAz = Number(E('B_az').value);
+
 }
 
 ['A_tx', 'A_rx', 'A_ip', 'A_az'].forEach(id => {
@@ -88,13 +85,14 @@ syncNode2FromNode1();
 
 async function create() {
   const aAz = E('A_az').value.trim();
-  let bAz = '';
-  if (aAz) {
-    const aAzNum = Number(aAz);
-    if (!Number.isNaN(aAzNum) && aAzNum >= 0 && aAzNum <= 7200) {
-      bAz = String((aAzNum + 3600) % 7200);
-    }
-  }
+  const bAz = E('B_az').value.trim();
+  
+  //if (aAz) {
+  //  const aAzNum = Number(aAz);
+  //  if (!Number.isNaN(aAzNum) && aAzNum >= 0 && aAzNum <= 7200) {
+  //    bAz = String((aAzNum + 3600) % 7200);
+  //  }
+  //}
   
   const body = {
     A_tx_MHz: Number(E('A_tx').value), A_rx_MHz: Number(E('A_rx').value),
