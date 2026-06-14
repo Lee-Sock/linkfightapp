@@ -454,6 +454,7 @@ class Antenna3DVisualization {
         moundB.position.y = (Math.max(1, yB)) / 2;
       }
     }
+    
 
     // Update distance label
     if (this.distanceLabel) {
@@ -688,7 +689,8 @@ class Antenna3DVisualization {
 
     // In GM mode, Y position already reflects total antenna height,
     // so use fixed minimal mast. In player mode, mast extends normally.
-    const mastHeight = (this.mode === 'gm') ? 2.0 : 2.0 + (mastSections - 1) * 1.67;
+    //const mastHeight = (this.mode === 'gm') ? 2.0 : 2.0 + (mastSections - 1) * 1.67;
+    const mastHeight = 2.0 + (mastSections - 1) * 1.67;
     const mast = antennaGroup.getObjectByName('mast');
     if (mast) {
       mast.scale.y = mastHeight;
