@@ -15,3 +15,7 @@ GM UI distance input max is wrong set at 100KM when max is 1000KM (fixed)
 
 
 GM UI extends the hill rather than the stem of the antenna when height increases
+
+Session SID regex in GM poll loop is dead code (no need to fix)
+
+PUT /simple/gm/{sid}/update not wired to GM UI (fixed)

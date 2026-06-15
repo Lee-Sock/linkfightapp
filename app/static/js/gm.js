@@ -148,6 +148,70 @@ async function create() {
   window.history.replaceState(null, '', '/gm?sid=' + sid);
 }
 
+async function update() {
+  const aAz = E('A_az').value.trim();
+  const bAz = E('B_az').value.trim();
+  
+  //if (aAz) {
+  //  const aAzNum = Number(aAz);
+  //  if (!Number.isNaN(aAzNum) && aAzNum >= 0 && aAzNum <= 7200) {
+  //    bAz = String((aAzNum + 3600) % 7200);
+  //  }
+  //}
+  
+  const body = {
+    A_tx_MHz: Number(E('A_tx').value), A_rx_MHz: Number(E('A_rx').value),
+    A_local_ip: E('A_ip').value, A_call_id: E('A_cid').value,
+    B_tx_MHz: Number(E('B_tx').value), B_rx_MHz: Number(E('B_rx').value),
+    B_local_ip: E('B_ip').value, B_call_id: E('B_cid').value,
+    A_elev_asl_m: Number(E('A_elev').value), B_elev_asl_m: Number(E('B_elev').value),
+    A_azimuth_ticks: aAz ? Number(aAz) : null,
+    B_azimuth_ticks: bAz ? Number(bAz) : null,
+    distance_km: Number(E('distance').value) || 5.0
+  };
+  const url2 = new URL(window.location.href);
+  const sid2 = url2.searchParams.get('sid');
+  console.log('/simple/gm/' + sid2 + '/update')
+  const r = await fetch('/simple/gm/' + sid2 + '/update', { 
+    method: 'PUT', 
+    headers: { 'Content-Type': 'application/json' }, 
+    body: JSON.stringify(body), 
+  });
+  
+  if (!r.ok) { 
+    showToast('Failed to update session', 'error');
+    return; 
+  }
+  
+  // Show session info
+  const sessionInfo = E('sessionInfo');
+  const sidRow = E('sidRow');
+  const links = E('links');
+  
+  sessionInfo.classList.remove('hidden');
+  sidRow.textContent = sid2;
+  
+  const a = `/player?sid=${sid2}&team=A`; 
+  const b = `/player?sid=${sid2}&team=B`;
+  
+  links.innerHTML = `
+    <a href="${a}" target="_blank" class="session-link">
+      <span class="badge badge-success" style="min-width: 60px;">Node A</span>
+      <span style="flex: 1; font-family: var(--font-mono); font-size: 0.875rem;">${a}</span>
+      <i data-lucide="external-link" class="session-link-icon" style="width: 16px; height: 16px;"></i>
+    </a>
+    <a href="${b}" target="_blank" class="session-link">
+      <span class="badge badge-warning" style="min-width: 60px;">Node B</span>
+      <span style="flex: 1; font-family: var(--font-mono); font-size: 0.875rem;">${b}</span>
+      <i data-lucide="external-link" class="session-link-icon" style="width: 16px; height: 16px;"></i>
+    </a>
+  `;
+  
+  lucide.createIcons();
+  showToast('Session updated successfully!');
+  window.history.replaceState(null, '', '/gm?sid=' + sid2);
+}
+
 async function poll() {
   while (true) {
     await new Promise(r => setTimeout(r, 900));
@@ -277,4 +341,5 @@ async function poll() {
 }
 
 E('create').onclick = create;
+E('update').onclick = update;
 poll();
