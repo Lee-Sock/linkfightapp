@@ -63,7 +63,7 @@
                     <div class="card-subtitle">Adjust azimuth, mast height, and tilt</div>
                 </div>
             </div>
-
+            
             <!-- Unified Responsive Controls -->
             <div class="control-layout" id="controls">
                 <!-- Azimuth Control -->
@@ -82,6 +82,25 @@
                         <button type="button" class="btn-azimuth-adjust btn-az-plus" data-delta="1000">+1000</button>
                     </div>
                 </div>
+                
+                 <!-- RX Signal -->
+                <div class="signal-meter-holder">
+                    <i data-lucide="signal" style="width: 24px; height: 24px; color: var(--color-primary-600);"></i>
+                    <div>
+                        <h2 class="signal-label">RX Signal Strength</h2>
+                        <div class="card-subtitle">Real-time signal quality indicator</div>
+                    </div>
+
+                    <div class="signal-meter">
+                        <div id="fill" class="signal-fill" style="width: 0%;"></div>
+                   </div>
+            
+                    <div class="signal-value">
+                        <span id="rx">- dBm</span>
+                        <span id="rxQuality" class="badge">No Signal</span>
+                    </div>
+
+                 </div>
 
                 <!-- Mast Control Sidebar -->
                 <div class="mast-control">
@@ -148,25 +167,6 @@
             </div>
         </div>
 
-        <!-- RX Signal Card -->
-        <div class="card">
-            <div class="card-header">
-                <i data-lucide="signal" style="width: 24px; height: 24px; color: var(--color-primary-600);"></i>
-                <div>
-                    <h2 class="card-title">RX Signal Strength</h2>
-                    <div class="card-subtitle">Real-time signal quality indicator</div>
-                </div>
-            </div>
-
-            <div class="signal-meter">
-                <div id="fill" class="signal-fill" style="width: 0%;"></div>
-            </div>
-            
-            <div class="signal-value">
-                <span id="rx">- dBm</span>
-                <span id="rxQuality" class="badge">No Signal</span>
-            </div>
-        </div>
     </div>
 
     <!-- Toast Container -->
@@ -176,7 +176,7 @@
     <!--  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script> -->
     <script src="/static/js/three.min.js"></script>
         <!-- <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script> -->
-    <script src="/static/js/OrbitControls.js"></script>
+    <script type="module" src="/static/js/OrbitControls.js"></script>
     <!-- Our custom scripts -->
     <script src="/static/js/antenna3d.js?v=7"></script>
     <script src="/static/js/player.js?v=7"></script>
