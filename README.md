@@ -410,12 +410,3 @@ Azimuth uses a **7200-tick scale** (military-style mils-adjacent):
 
 ### 1. Distance not computed from lat/lon
 `distance_km` is a manually set field (default 5 km). The nodes' lat/lon are only used for bearing computation. This means the bearing is always the real Singapore bearing (~75° A→B) regardless of what distance you set. For a 100 km session the angles shown are still the Singapore geometry — visually inconsistent but functionally workable.
-
-### 2. Debug endpoints have no authentication
-`check_debug_access()` in `debug.py` is a stub that always passes. The commented-out env var guard (`ENABLE_DEBUG`) should be activated before any deployment outside a local LAN.
-
-### 3. `app/main_original_backup.py` — dead file
-An old backup of `main.py` remains in the `app/` directory. It's not imported anywhere. It should be deleted when it's no longer needed as a reference.
-
-### 4. Frequency penalty tolerance is very wide
-The current model applies **zero penalty** if TX and RX frequencies are within 1 MHz of each other. The earlier implementation was 5 kHz/dB (which was too aggressive for gameplay), relaxed to 50 kHz/dB. The 1 MHz free zone means players rarely encounter this penalty in practice.

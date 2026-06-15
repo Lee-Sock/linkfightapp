@@ -22,7 +22,16 @@ PUT /simple/gm/{sid}/update not wired to GM UI (fixed)
 
 No error message detail on session create failure(fixed)
 
-### 5. Three.js loaded from CDN only
+### 5. Three.js loaded from CDN only (fixed)
 If the CDN (`cdn.jsdelivr.net` for Three.js, `unpkg.com` for Lucide) is unavailable, 
 the 3D visualization and icons silently fail. There is a `typeof THREE === 'undefined'` 
-guard in JS that logs an error, but no graceful text-based fallback. (fixed)
+guard in JS that logs an error, but no graceful text-based fallback.
+
+### 2. Debug endpoints have no authentication (non-issue)
+`check_debug_access()` in `debug.py` is a stub that always passes. The commented-out env var guard (`ENABLE_DEBUG`) should be activated before any deployment outside a local LAN.
+
+### 3. `app/main_original_backup.py` — dead file (fixed)
+An old backup of `main.py` remains in the `app/` directory. It's not imported anywhere. It should be deleted when it's no longer needed as a reference.
+
+### 4. Frequency penalty tolerance is very wide (non-issue)
+The current model applies **zero penalty** if TX and RX frequencies are within 1 MHz of each other. The earlier implementation was 5 kHz/dB (which was too aggressive for gameplay), relaxed to 50 kHz/dB. The 1 MHz free zone means players rarely encounter this penalty in practice.
