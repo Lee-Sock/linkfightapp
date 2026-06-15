@@ -411,23 +411,20 @@ Azimuth uses a **7200-tick scale** (military-style mils-adjacent):
 ### 1. Distance not computed from lat/lon
 `distance_km` is a manually set field (default 5 km). The nodes' lat/lon are only used for bearing computation. This means the bearing is always the real Singapore bearing (~75° A→B) regardless of what distance you set. For a 100 km session the angles shown are still the Singapore geometry — visually inconsistent but functionally workable.
 
-### 2. Mast does not visually extend in GM 3D mode
-In `updateAntenna()`, when `mode === 'gm'`, `mastHeight` is hardcoded to `2.0` regardless of the player's actual mast section count. The node's vertical position (`yA`/`yB`) is set correctly from `antenna_elevation_m`, but the mast column itself doesn't stretch visually as sections increase.
-
-### 3. Debug endpoints have no authentication
+### 2. Debug endpoints have no authentication
 `check_debug_access()` in `debug.py` is a stub that always passes. The commented-out env var guard (`ENABLE_DEBUG`) should be activated before any deployment outside a local LAN.
 
-### 4. Excessive `console.log` in player.js
+### 3. Excessive `console.log` in player.js
 `player.js` has `[DEBUG]` log statements on every control interaction, every apply call, and every poll iteration. These should be stripped for any production use.
 
-### 5. `app/main_original_backup.py` — dead file
+### 4. `app/main_original_backup.py` — dead file
 An old backup of `main.py` remains in the `app/` directory. It's not imported anywhere. It should be deleted when it's no longer needed as a reference.
 
-### 6. No error message detail on session create failure
+### 5. No error message detail on session create failure
 If the GM's create request fails (e.g. bad frequency, distance out of range), the UI shows a generic "Failed to create session" toast without surfacing the actual validation error from the server.
 
-### 7. Three.js loaded from CDN only
+### 6. Three.js loaded from CDN only
 If the CDN (`cdn.jsdelivr.net` for Three.js, `unpkg.com` for Lucide) is unavailable, the 3D visualization and icons silently fail. There is a `typeof THREE === 'undefined'` guard in JS that logs an error, but no graceful text-based fallback.
 
-### 8. Frequency penalty tolerance is very wide
+### 7. Frequency penalty tolerance is very wide
 The current model applies **zero penalty** if TX and RX frequencies are within 1 MHz of each other. The earlier implementation was 5 kHz/dB (which was too aggressive for gameplay), relaxed to 50 kHz/dB. The 1 MHz free zone means players rarely encounter this penalty in practice.
