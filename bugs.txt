@@ -14,7 +14,7 @@ Node B azimuth not independently settable in GM UI (fixed)
 GM UI distance input max is wrong set at 100KM when max is 1000KM (fixed)
 
 
-GM UI extends the hill rather than the stem of the antenna when height increases
+GM UI extends the hill rather than the stem of the antenna when height increases (fixed)
 
 Session SID regex in GM poll loop is dead code (no need to fix)
 
