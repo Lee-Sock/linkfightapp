@@ -112,7 +112,9 @@ async function create() {
   });
   
   if (!r.ok) { 
-    showToast('Failed to create session', 'error');
+    const errorData = await r.json();
+    const errorDetails = errorData.detail[0].msg;
+    showToast('Failed to create session' + errorDetails , 'error');
     return; 
   }
   
@@ -179,7 +181,9 @@ async function update() {
   });
   
   if (!r.ok) { 
-    showToast('Failed to update session', 'error');
+    const errorData = await r.json();
+    const errorDetails = errorData.detail[0].msg;
+    showToast('Failed to update session' + errorDetails , 'error');
     return; 
   }
   
