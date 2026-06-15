@@ -414,9 +414,6 @@ Azimuth uses a **7200-tick scale** (military-style mils-adjacent):
 ### 2. Debug endpoints have no authentication
 `check_debug_access()` in `debug.py` is a stub that always passes. The commented-out env var guard (`ENABLE_DEBUG`) should be activated before any deployment outside a local LAN.
 
-### 3. Excessive `console.log` in player.js
-`player.js` has `[DEBUG]` log statements on every control interaction, every apply call, and every poll iteration. These should be stripped for any production use.
-
 ### 4. `app/main_original_backup.py` — dead file
 An old backup of `main.py` remains in the `app/` directory. It's not imported anywhere. It should be deleted when it's no longer needed as a reference.
 

@@ -86,7 +86,7 @@ let applyTimeout = null;
 function debounceApply() {
   if (applyTimeout) clearTimeout(applyTimeout);
   applyTimeout = setTimeout(() => {
-    console.log('[DEBUG] debounceApply: calling apply()');
+    //console.log('[DEBUG] debounceApply: calling apply()');
     apply();
   }, 150);
 }
@@ -118,13 +118,13 @@ function adjustMast(delta) {
 
 // Setup unified controls - attach handlers once
 function setupControls() {
-  console.log('[DEBUG] setupControls: attaching event handlers');
+  //console.log('[DEBUG] setupControls: attaching event handlers');
   
   // Azimuth buttons - use event delegation
   document.querySelectorAll('.btn-azimuth-adjust').forEach(btn => {
     btn.onclick = () => {
       const delta = parseInt(btn.dataset.delta, 10);
-      console.log('[DEBUG] Azimuth button clicked, delta:', delta);
+      //console.log('[DEBUG] Azimuth button clicked, delta:', delta);
       adjustAz(delta);
     };
   });
@@ -151,7 +151,7 @@ function setupControls() {
       updateVisualization();
     };
     mastSlider.onchange = () => {
-      console.log('[DEBUG] Mast slider changed, calling apply()');
+      //console.log('[DEBUG] Mast slider changed, calling apply()');
       apply();
     };
   }
@@ -166,7 +166,7 @@ function setupControls() {
       updateVisualization();
     };
     tiltSlider.onchange = () => {
-      console.log('[DEBUG] Tilt slider changed, calling apply()');
+      //console.log('[DEBUG] Tilt slider changed, calling apply()');
       apply();
     };
   }
@@ -174,7 +174,7 @@ function setupControls() {
 
 // Handle window resize - no need to switch layouts now
 function handleResize() {
-  console.log('[DEBUG] handleResize called, isMobile:', isMobile());
+  //console.log('[DEBUG] handleResize called, isMobile:', isMobile());
   
   // Just ensure 3D visualization adjusts to container size
   if (viz3d && viz3d.onWindowResize) {
@@ -221,19 +221,19 @@ function readQueryDefaults() {
     const url = new URL(window.location.href);
     const sid = url.searchParams.get('sid') || '';
     const team = (url.searchParams.get('team') || 'A').toUpperCase();
-    console.log('Player.js: Reading URL defaults - sid:', sid, 'team:', team);
+    //console.log('Player.js: Reading URL defaults - sid:', sid, 'team:', team);
     if (sid) {
       const sidInput = E('sid');
       if (sidInput) {
         sidInput.value = sid;
-        console.log('Player.js: Session ID set to:', sid);
+        //console.log('Player.js: Session ID set to:', sid);
       }
     }
     if (team === 'A' || team === 'B') {
       const teamSelect = E('team');
       if (teamSelect) {
         teamSelect.value = team;
-        console.log('Player.js: Team set to:', team);
+        //console.log('Player.js: Team set to:', team);
       }
     }
   } catch (err) {
@@ -256,69 +256,69 @@ try {
 }
 
 async function join() {
-  console.log('[DEBUG] Join function called');
+  //console.log('[DEBUG] Join function called');
   const sid = E('sid').value.trim();
   const team = E('team').value;
   currentTeam = team;
-  console.log('[DEBUG] Join - sid:', sid, 'team:', team);
+  //console.log('[DEBUG] Join - sid:', sid, 'team:', team);
   if (!sid) {
-    console.log('[DEBUG] Join - no sid, returning');
+    //console.log('[DEBUG] Join - no sid, returning');
     return;
   }
 
   const r = await fetch(`/simple/${sid}/player_view?team=${team}`);
-  console.log('[DEBUG] Join - fetch status:', r.status);
+  //console.log('[DEBUG] Join - fetch status:', r.status);
   if (!r.ok) {
-    console.log('[DEBUG] Join - fetch failed');
+    //console.log('[DEBUG] Join - fetch failed');
     E('joinStatus').innerHTML = '<span class="badge badge-error">Failed to join session</span>';
     return;
   }
 
   const j = await r.json();
-  console.log('[DEBUG] Join - response JSON:', j);
+  //console.log('[DEBUG] Join - response JSON:', j);
   
   if (j.brief) {
-    console.log('[DEBUG] Join - setting brief');
+    //console.log('[DEBUG] Join - setting brief');
     E('brief').textContent = fmtBrief(j.brief);
   }
   
   // Initialize current values from server if available
   if (j.my_current) {
-    console.log('[DEBUG] Join - initializing from server state:', j.my_current);
+    //console.log('[DEBUG] Join - initializing from server state:', j.my_current);
     currentAz = j.my_current.azimuth_ticks || 0;
     currentTilt = j.my_current.tilt_deg || 0;
     currentMast = j.my_current.mast_sections || 1;
   } else {
-    console.log('[DEBUG] Join - no my_current, using defaults');
+    //console.log('[DEBUG] Join - no my_current, using defaults');
     currentAz = 0;
     currentTilt = 0;
     currentMast = 1;
   }
   updateDisplays();
 
-  console.log('[DEBUG] Join - calling apply()');
+  //console.log('[DEBUG] Join - calling apply()');
   await apply();
 
-  console.log('[DEBUG] Join - successful, updating status');
+  //console.log('[DEBUG] Join - successful, updating status');
   E('joinStatus').innerHTML = `<span class="badge badge-success"><i data-lucide="check-circle" style="width: 12px; height: 12px;"></i> Joined as ${team === 'A' ? 'Node 1' : 'Node 2'}</span>`;
   lucide.createIcons();
   showToast(`Joined as ${team === 'A' ? 'Node 1' : 'Node 2'}!`);
 
   // Initialize 3D visualization - now only one container
   if (!viz3d) {
-    console.log('[DEBUG] Join - Initializing 3D visualization...');
+    //console.log('[DEBUG] Join - Initializing 3D visualization...');
     try {
       if (typeof THREE === 'undefined') {
-        console.error('[DEBUG] THREE.js not loaded!');
+        //console.error('[DEBUG] THREE.js not loaded!');
         return;
       }
       if (typeof Antenna3DVisualization === 'undefined') {
-        console.error('[DEBUG] Antenna3DVisualization class not loaded!');
+        //console.error('[DEBUG] Antenna3DVisualization class not loaded!');
         return;
       }
       
       viz3d = new Antenna3DVisualization('antenna3d-container', 'player', team);
-      console.log('[DEBUG] 3D visualization initialized successfully');
+      //console.log('[DEBUG] 3D visualization initialized successfully');
 
       if (j.my_current && j.other_current) {
         viz3d.updateFromPlayerData({
@@ -343,7 +343,7 @@ async function apply() {
   if (!sid) return;
 
   const payload = { azimuth_ticks: currentAz, tilt_deg: currentTilt, mast_sections: currentMast };
-  console.log('[DEBUG] apply() - sending payload to server:', payload, 'sid:', sid, 'team:', team);
+  //console.log('[DEBUG] apply() - sending payload to server:', payload, 'sid:', sid, 'team:', team);
 
   try {
     const response = await fetch(`/simple/${sid}/team/${team}/set`, {
@@ -356,13 +356,13 @@ async function apply() {
       })
     });
 
-    console.log('[DEBUG] apply() - response status:', response.status);
+    //console.log('[DEBUG] apply() - response status:', response.status);
     if (response.ok) {
       hasUnappliedChanges = false;
       lastAppliedAz = currentAz;
       lastAppliedTilt = currentTilt;
       lastAppliedMast = currentMast;
-      console.log('[DEBUG] apply() - update successful');
+      //console.log('[DEBUG] apply() - update successful');
     } else {
       try {
         const text = await response.text();
@@ -377,7 +377,7 @@ async function apply() {
 }
 
 async function poll() {
-  console.log('[DEBUG] Poll function started');
+  //console.log('[DEBUG] Poll function started');
   while (true) {
     await new Promise(r => setTimeout(r, 900));
     const sid = E('sid').value.trim();
@@ -453,14 +453,14 @@ try {
   const joinBtn = E('join');
   if (joinBtn) {
     joinBtn.onclick = async () => {
-      console.log('Player.js: Join button clicked');
+      //console.log('Player.js: Join button clicked');
       await join();
       if (!polling) {
         polling = true;
         poll();
       }
     };
-    console.log('Player.js: Join button handler set up');
+    //console.log('Player.js: Join button handler set up');
   } else {
     console.error('Player.js: Join button not found!');
   }
