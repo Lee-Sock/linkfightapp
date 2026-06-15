@@ -383,7 +383,7 @@ Azimuth uses a **7200-tick scale** (military-style mils-adjacent):
 - Dish rim ring, feed horn, and support struts
 - Player mode: daytime sky, compass rose (N/E/S/W), horizon tick markers
 - GM mode: dark military sky, both nodes, elevation terrain mounds, colored signal beams
-- Orbit controls (click-drag rotate, scroll zoom, right-click pan)
+~~- Orbit controls (click-drag rotate, scroll zoom, right-click pan)~~
 - Pauses rendering when browser tab is not visible
 
 **Responsive UI (complete)**
