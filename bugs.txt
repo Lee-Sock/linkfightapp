@@ -21,3 +21,8 @@ Session SID regex in GM poll loop is dead code (no need to fix)
 PUT /simple/gm/{sid}/update not wired to GM UI (fixed)
 
 No error message detail on session create failure(fixed)
+
+### 5. Three.js loaded from CDN only
+If the CDN (`cdn.jsdelivr.net` for Three.js, `unpkg.com` for Lucide) is unavailable, 
+the 3D visualization and icons silently fail. There is a `typeof THREE === 'undefined'` 
+guard in JS that logs an error, but no graceful text-based fallback. (fixed)

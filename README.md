@@ -414,11 +414,8 @@ Azimuth uses a **7200-tick scale** (military-style mils-adjacent):
 ### 2. Debug endpoints have no authentication
 `check_debug_access()` in `debug.py` is a stub that always passes. The commented-out env var guard (`ENABLE_DEBUG`) should be activated before any deployment outside a local LAN.
 
-### 4. `app/main_original_backup.py` — dead file
+### 3. `app/main_original_backup.py` — dead file
 An old backup of `main.py` remains in the `app/` directory. It's not imported anywhere. It should be deleted when it's no longer needed as a reference.
 
-### 5. Three.js loaded from CDN only
-If the CDN (`cdn.jsdelivr.net` for Three.js, `unpkg.com` for Lucide) is unavailable, the 3D visualization and icons silently fail. There is a `typeof THREE === 'undefined'` guard in JS that logs an error, but no graceful text-based fallback.
-
-### 6. Frequency penalty tolerance is very wide
+### 4. Frequency penalty tolerance is very wide
 The current model applies **zero penalty** if TX and RX frequencies are within 1 MHz of each other. The earlier implementation was 5 kHz/dB (which was too aggressive for gameplay), relaxed to 50 kHz/dB. The 1 MHz free zone means players rarely encounter this penalty in practice.
