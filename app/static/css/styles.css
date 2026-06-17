@@ -1001,14 +1001,14 @@ input[type="range"] {
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    min-height: 400px;
+    min-height: 200px;
   }
   
   #antenna3d-container {
     grid-column: 2;
     grid-row: 3;
     order: initial;
-    min-height: 400px;
+    min-height: 200px;
     aspect-ratio: initial;
   }
   
@@ -1020,7 +1020,7 @@ input[type="range"] {
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    min-height: 400px;
+    min-height: 200px;
   }
   
   .slider-wrapper {
