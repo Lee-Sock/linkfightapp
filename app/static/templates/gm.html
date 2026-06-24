@@ -186,13 +186,23 @@
 
     <!-- Three.js CDN -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script> -->
-    <script src="/static/js/three.min.js"></script>
+    <!-- <script src="/static/js/three.min.js"></script> -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script> -->
-    <script type="module" src="/static/js/OrbitControls.js"></script>
+    <!-- <script type="module" src="/static/js/OrbitControls.js"></script> -->
+   
+    <script type="importmap">
+  {
+    "imports": {
+      "three": "/static/js/three.module.min.js",
+      "three/addons/OrbitControls": "/static/js/OrbitControls.js",
+      "three/addons/CSS2DRenderer": "/static/js/CSS2DRenderer.js"
+    }
+  }
+    </script>
+   
     <!-- Our custom scripts -->
-    <script src="/static/js/antenna3d.js?v=7"></script>
+    <script type="module" src="/static/js/antenna3d.js?v=7"></script>
     <script src="/static/js/gm.js?v=7"></script>
-    
     <script>
         lucide.createIcons();
     </script>

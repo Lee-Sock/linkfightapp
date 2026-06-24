@@ -1,4 +1,7 @@
 // Gamemaster UI JavaScript
+import * as THREE from '/static/js/three.module.min.js';
+import { OrbitControls } from '/static/js/OrbitControls.js';
+import { CSS2DObject, CSS2DRenderer } from '/static/js/CSS2DRenderer.js';
 
 const E = id => document.getElementById(id);
 

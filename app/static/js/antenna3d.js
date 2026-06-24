@@ -1,4 +1,7 @@
 // Three.js 3D Antenna Visualization
+import * as THREE from '/static/js/three.module.min.js';
+import { OrbitControls } from '/static/js/OrbitControls.js';
+import { CSS2DObject, CSS2DRenderer } from '/static/js/CSS2DRenderer.js';
 
 class Antenna3DVisualization {
   constructor(containerId, mode = 'player', myNode = 'A') {
